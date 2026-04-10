@@ -1,0 +1,527 @@
+# Organizador Docente — Paso 1: Esquema de Base de Datos
+
+## Contexto
+
+Aplicación PWA de gestión integral para docentes. Stack: Next.js + Supabase. El docente trabaja en múltiples escuelas simultáneamente. Todo dato se filtra por `teacher_id` (auth.uid) → Escuela → Curso.
+
+---
+
+## Diagrama de Entidades
+
+```mermaid
+erDiagram
+    TEACHERS ||--o{ SCHOOLS : "posee"
+    SCHOOLS ||--o{ COURSES : "contiene"
+    COURSES ||--o{ COURSE_SCHEDULES : "tiene horarios"
+    COURSES ||--o{ COURSE_STUDENTS : "inscripción"
+    STUDENTS ||--o{ COURSE_STUDENTS : "inscripción"
+    COURSES ||--o{ ASSIGNMENTS : "tiene TPs"
+    ASSIGNMENTS ||--o{ ASSIGNMENT_SUBMISSIONS : "entregas"
+    STUDENTS ||--o{ ASSIGNMENT_SUBMISSIONS : "entrega"
+    COURSES ||--o{ GRADES : "calificaciones"
+    STUDENTS ||--o{ GRADES : "calificaciones"
+    ASSIGNMENTS ||--o{ GRADES : "califica TP"
+    COURSES ||--o{ LESSON_PLANS : "planificación"
+    LESSON_PLANS ||--o{ LESSON_PLAN_ASSIGNMENTS : "vincula TP"
+    ASSIGNMENTS ||--o{ LESSON_PLAN_ASSIGNMENTS : "vincula plan"
+
+    TEACHERS {
+        uuid id PK
+        text full_name
+        text email
+        text avatar_url
+        jsonb preferences
+    }
+
+    SCHOOLS {
+        uuid id PK
+        uuid teacher_id FK
+        text name
+        text address
+        text phone
+        text level "Primaria/Secundaria/Terciario"
+        text turno "Mañana/Tarde/Noche"
+    }
+
+    COURSES {
+        uuid id PK
+        uuid school_id FK
+        text name "Geografía, Historia..."
+        text year "1er Año, 2do Año..."
+        text division "A, B, C..."
+        text color "Hex color para UI"
+    }
+
+    COURSE_SCHEDULES {
+        uuid id PK
+        uuid course_id FK
+        int day_of_week "0=Dom...6=Sáb"
+        time start_time
+        time end_time
+        text classroom
+    }
+
+    STUDENTS {
+        uuid id PK
+        uuid teacher_id FK
+        text first_name
+        text last_name
+        text dni
+        text email
+        text phone
+        text notes
+    }
+
+    COURSE_STUDENTS {
+        uuid id PK
+        uuid course_id FK
+        uuid student_id FK
+        text status "activo/inactivo"
+    }
+
+    ASSIGNMENTS {
+        uuid id PK
+        uuid course_id FK
+        text title
+        text description
+        text status "borrador/asignado/entregado"
+        date due_date
+        text type "TP/evaluación/actividad"
+        jsonb rubric
+        text[] attachment_urls
+    }
+
+    ASSIGNMENT_SUBMISSIONS {
+        uuid id PK
+        uuid assignment_id FK
+        uuid student_id FK
+        text status "pendiente/entregado/corregido"
+        text[] file_urls
+        text feedback
+        timestamptz submitted_at
+    }
+
+    GRADES {
+        uuid id PK
+        uuid course_id FK
+        uuid student_id FK
+        uuid assignment_id FK "nullable, para notas sin TP"
+        numeric value "1-10"
+        text period "1er Trim/2do Trim/3er Trim/Final"
+        text category "TP/parcial/concepto/participación"
+        text observations
+    }
+
+    LESSON_PLANS {
+        uuid id PK
+        uuid course_id FK
+        text title
+        text type "anual/unidad/clase/armani"
+        text content "Markdown o texto largo"
+        text[] attachment_urls
+    }
+
+    LESSON_PLAN_ASSIGNMENTS {
+        uuid id PK
+        uuid lesson_plan_id FK
+        uuid assignment_id FK
+    }
+```
+
+---
+
+## SQL Completo para Supabase
+
+```sql
+-- ============================================================
+-- ENUMS
+-- ============================================================
+CREATE TYPE school_level AS ENUM ('primaria', 'secundaria', 'terciario', 'universitario');
+CREATE TYPE school_shift AS ENUM ('mañana', 'tarde', 'noche', 'vespertino');
+CREATE TYPE enrollment_status AS ENUM ('activo', 'inactivo');
+CREATE TYPE assignment_status AS ENUM ('borrador', 'asignado', 'entregado');
+CREATE TYPE submission_status AS ENUM ('pendiente', 'entregado', 'corregido');
+CREATE TYPE assignment_type AS ENUM ('tp', 'evaluacion', 'actividad');
+CREATE TYPE grade_period AS ENUM ('1er_trimestre', '2do_trimestre', '3er_trimestre', 'final');
+CREATE TYPE grade_category AS ENUM ('tp', 'parcial', 'concepto', 'participacion', 'examen');
+CREATE TYPE lesson_plan_type AS ENUM ('anual', 'unidad', 'clase', 'armani');
+
+-- ============================================================
+-- 1. TEACHERS (perfil del docente, extendido de auth.users)
+-- ============================================================
+CREATE TABLE public.teachers (
+    id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    full_name   TEXT NOT NULL,
+    email       TEXT NOT NULL,
+    avatar_url  TEXT,
+    preferences JSONB DEFAULT '{}',
+    created_at  TIMESTAMPTZ DEFAULT now(),
+    updated_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- 2. SCHOOLS (escuelas del docente)
+-- ============================================================
+CREATE TABLE public.schools (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_id  UUID NOT NULL REFERENCES public.teachers(id) ON DELETE CASCADE,
+    name        TEXT NOT NULL,
+    address     TEXT,
+    phone       TEXT,
+    level       school_level,
+    shift       school_shift,
+    created_at  TIMESTAMPTZ DEFAULT now(),
+    updated_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- 3. COURSES (materias/cursos dentro de una escuela)
+-- ============================================================
+CREATE TABLE public.courses (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    school_id   UUID NOT NULL REFERENCES public.schools(id) ON DELETE CASCADE,
+    name        TEXT NOT NULL,
+    year        TEXT,              -- "1er Año", "2do Año"
+    division    TEXT,              -- "A", "B", "C"
+    color       TEXT DEFAULT '#6366f1',
+    created_at  TIMESTAMPTZ DEFAULT now(),
+    updated_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- 4. COURSE_SCHEDULES (horarios de cada curso)
+-- ============================================================
+CREATE TABLE public.course_schedules (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id   UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
+    day_of_week SMALLINT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+    start_time  TIME NOT NULL,
+    end_time    TIME NOT NULL,
+    classroom   TEXT,
+    created_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- 5. STUDENTS (alumnos globales del docente)
+-- ============================================================
+CREATE TABLE public.students (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_id  UUID NOT NULL REFERENCES public.teachers(id) ON DELETE CASCADE,
+    first_name  TEXT NOT NULL,
+    last_name   TEXT NOT NULL,
+    dni         TEXT,
+    email       TEXT,
+    phone       TEXT,
+    notes       TEXT,
+    created_at  TIMESTAMPTZ DEFAULT now(),
+    updated_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- 6. COURSE_STUDENTS (inscripción alumnos ↔ cursos)
+-- ============================================================
+CREATE TABLE public.course_students (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id   UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
+    student_id  UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+    status      enrollment_status DEFAULT 'activo',
+    enrolled_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(course_id, student_id)
+);
+
+-- ============================================================
+-- 7. ASSIGNMENTS (trabajos prácticos / evaluaciones)
+-- ============================================================
+CREATE TABLE public.assignments (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id       UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
+    title           TEXT NOT NULL,
+    description     TEXT,
+    status          assignment_status DEFAULT 'borrador',
+    type            assignment_type DEFAULT 'tp',
+    due_date        DATE,
+    rubric          JSONB,
+    attachment_urls TEXT[] DEFAULT '{}',
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    updated_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- 8. ASSIGNMENT_SUBMISSIONS (entregas de alumnos)
+-- ============================================================
+CREATE TABLE public.assignment_submissions (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assignment_id   UUID NOT NULL REFERENCES public.assignments(id) ON DELETE CASCADE,
+    student_id      UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+    status          submission_status DEFAULT 'pendiente',
+    file_urls       TEXT[] DEFAULT '{}',
+    feedback        TEXT,
+    submitted_at    TIMESTAMPTZ,
+    graded_at       TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(assignment_id, student_id)
+);
+
+-- ============================================================
+-- 9. GRADES (calificaciones)
+-- ============================================================
+CREATE TABLE public.grades (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id       UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
+    student_id      UUID NOT NULL REFERENCES public.students(id) ON DELETE CASCADE,
+    assignment_id   UUID REFERENCES public.assignments(id) ON DELETE SET NULL,
+    value           NUMERIC(4,2) NOT NULL CHECK (value >= 0 AND value <= 10),
+    period          grade_period NOT NULL,
+    category        grade_category DEFAULT 'tp',
+    observations    TEXT,
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    updated_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- 10. LESSON_PLANS (planificaciones)
+-- ============================================================
+CREATE TABLE public.lesson_plans (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id       UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
+    title           TEXT NOT NULL,
+    type            lesson_plan_type DEFAULT 'unidad',
+    content         TEXT,
+    attachment_urls TEXT[] DEFAULT '{}',
+    created_at      TIMESTAMPTZ DEFAULT now(),
+    updated_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================================
+-- 11. LESSON_PLAN_ASSIGNMENTS (vínculo planificación ↔ TPs)
+-- ============================================================
+CREATE TABLE public.lesson_plan_assignments (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lesson_plan_id  UUID NOT NULL REFERENCES public.lesson_plans(id) ON DELETE CASCADE,
+    assignment_id   UUID NOT NULL REFERENCES public.assignments(id) ON DELETE CASCADE,
+    UNIQUE(lesson_plan_id, assignment_id)
+);
+
+-- ============================================================
+-- INDEXES para rendimiento
+-- ============================================================
+CREATE INDEX idx_schools_teacher ON public.schools(teacher_id);
+CREATE INDEX idx_courses_school ON public.courses(school_id);
+CREATE INDEX idx_course_schedules_course ON public.course_schedules(course_id);
+CREATE INDEX idx_course_schedules_day ON public.course_schedules(day_of_week);
+CREATE INDEX idx_students_teacher ON public.students(teacher_id);
+CREATE INDEX idx_course_students_course ON public.course_students(course_id);
+CREATE INDEX idx_course_students_student ON public.course_students(student_id);
+CREATE INDEX idx_assignments_course ON public.assignments(course_id);
+CREATE INDEX idx_assignments_status ON public.assignments(status);
+CREATE INDEX idx_submissions_assignment ON public.assignment_submissions(assignment_id);
+CREATE INDEX idx_submissions_student ON public.assignment_submissions(student_id);
+CREATE INDEX idx_grades_course ON public.grades(course_id);
+CREATE INDEX idx_grades_student ON public.grades(student_id);
+CREATE INDEX idx_grades_period ON public.grades(period);
+CREATE INDEX idx_lesson_plans_course ON public.lesson_plans(course_id);
+
+-- ============================================================
+-- ROW LEVEL SECURITY (multi-tenancy por docente)
+-- ============================================================
+ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.schools ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.course_schedules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.course_students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.assignment_submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.grades ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lesson_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lesson_plan_assignments ENABLE ROW LEVEL SECURITY;
+
+-- Teachers: solo su propio perfil
+CREATE POLICY "teachers_own" ON public.teachers
+    FOR ALL USING (id = auth.uid());
+
+-- Schools: solo las del docente autenticado
+CREATE POLICY "schools_own" ON public.schools
+    FOR ALL USING (teacher_id = auth.uid());
+
+-- Courses: via school → teacher_id
+CREATE POLICY "courses_own" ON public.courses
+    FOR ALL USING (
+        school_id IN (SELECT id FROM public.schools WHERE teacher_id = auth.uid())
+    );
+
+-- Course Schedules: via course → school → teacher
+CREATE POLICY "schedules_own" ON public.course_schedules
+    FOR ALL USING (
+        course_id IN (
+            SELECT c.id FROM public.courses c
+            JOIN public.schools s ON c.school_id = s.id
+            WHERE s.teacher_id = auth.uid()
+        )
+    );
+
+-- Students: solo los del docente
+CREATE POLICY "students_own" ON public.students
+    FOR ALL USING (teacher_id = auth.uid());
+
+-- Course Students: via course ownership
+CREATE POLICY "course_students_own" ON public.course_students
+    FOR ALL USING (
+        course_id IN (
+            SELECT c.id FROM public.courses c
+            JOIN public.schools s ON c.school_id = s.id
+            WHERE s.teacher_id = auth.uid()
+        )
+    );
+
+-- Assignments: via course ownership
+CREATE POLICY "assignments_own" ON public.assignments
+    FOR ALL USING (
+        course_id IN (
+            SELECT c.id FROM public.courses c
+            JOIN public.schools s ON c.school_id = s.id
+            WHERE s.teacher_id = auth.uid()
+        )
+    );
+
+-- Submissions: via assignment → course ownership
+CREATE POLICY "submissions_own" ON public.assignment_submissions
+    FOR ALL USING (
+        assignment_id IN (
+            SELECT a.id FROM public.assignments a
+            JOIN public.courses c ON a.course_id = c.id
+            JOIN public.schools s ON c.school_id = s.id
+            WHERE s.teacher_id = auth.uid()
+        )
+    );
+
+-- Grades: via course ownership
+CREATE POLICY "grades_own" ON public.grades
+    FOR ALL USING (
+        course_id IN (
+            SELECT c.id FROM public.courses c
+            JOIN public.schools s ON c.school_id = s.id
+            WHERE s.teacher_id = auth.uid()
+        )
+    );
+
+-- Lesson Plans: via course ownership
+CREATE POLICY "lesson_plans_own" ON public.lesson_plans
+    FOR ALL USING (
+        course_id IN (
+            SELECT c.id FROM public.courses c
+            JOIN public.schools s ON c.school_id = s.id
+            WHERE s.teacher_id = auth.uid()
+        )
+    );
+
+-- Lesson Plan Assignments: via lesson_plan ownership
+CREATE POLICY "lp_assignments_own" ON public.lesson_plan_assignments
+    FOR ALL USING (
+        lesson_plan_id IN (
+            SELECT lp.id FROM public.lesson_plans lp
+            JOIN public.courses c ON lp.course_id = c.id
+            JOIN public.schools s ON c.school_id = s.id
+            WHERE s.teacher_id = auth.uid()
+        )
+    );
+
+-- ============================================================
+-- STORAGE BUCKETS (para archivos adjuntos)
+-- ============================================================
+-- Se crearán 2 buckets en Supabase Storage:
+--   1. "assignments" → PDFs, rúbricas, archivos de TPs
+--   2. "lesson-plans" → Planificaciones subidas
+
+-- ============================================================
+-- FUNCIÓN TRIGGER: updated_at automático
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.teachers
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.schools
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.courses
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.students
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.assignments
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.grades
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+CREATE TRIGGER set_updated_at BEFORE UPDATE ON public.lesson_plans
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- ============================================================
+-- FUNCIÓN: crear perfil de teacher al registrarse
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.teachers (id, full_name, email)
+    VALUES (
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+        NEW.email
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+```
+
+---
+
+## Decisiones de Diseño Clave
+
+| Decisión | Justificación |
+|---|---|
+| **`students.teacher_id`** en vez de global | Cada docente gestiona SU lista de alumnos. Un mismo alumno real puede existir como registros separados para distintos docentes. Simplifica RLS enormemente. |
+| **`course_students` tabla pivote** | Un alumno puede estar en múltiples cursos (Geografía + Historia). Permite matriculación flexible. |
+| **`grades.assignment_id` nullable** | Permite calificaciones generales (concepto, participación) que no están vinculadas a un TP específico. |
+| **`lesson_plan_assignments` tabla pivote** | Una planificación puede vincular múltiples TPs y un TP puede aparecer en múltiples planificaciones. |
+| **ENUMs para estados** | Garantiza integridad de datos en flujos de estado (borrador → asignado → entregado). |
+| **RLS cadena `school → teacher`** | Todo dato se filtra por la cadena: `teacher_id = auth.uid()`. Las tablas hijas (courses, assignments) usan subqueries para verificar ownership vía schools. |
+| **`preferences` JSONB** | Flexible para almacenar configuraciones del usuario (tema, idioma, vistas preferidas) sin alterar el schema. |
+
+---
+
+## Escalabilidad Futura
+
+> [!TIP]
+> Este schema ya contempla los datos necesarios para generar la **Declaración Jurada de Cargos y Actividades** cruzando:
+> - `schools` (instituciones)
+> - `courses` (materias con año/división)
+> - `course_schedules` (horarios detallados por día)
+
+Para la Fase 2 se pueden agregar:
+- `attendance` (asistencia diaria por curso)
+- `calendar_events` (agenda del docente)
+- `document_templates` (plantillas de documentos burocráticos)
+
+---
+
+## Plan de Verificación
+
+### Post-migración
+1. Verificar que todas las tablas existen: `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`
+2. Verificar RLS habilitado en todas las tablas
+3. Verificar policies creadas: `SELECT tablename, policyname FROM pg_policies`
+4. Verificar trigger `handle_new_user` existe en `auth.users`
+
+### Funcional (manual, después de implementar la app)
+- Registrar un usuario → verificar que se crea fila en `teachers`
+- Crear escuela, curso con horarios, inscribir alumnos
+- Crear TP con flujo de estados
+- Cargar calificaciones con y sin assignment_id
+- Subir archivos a storage buckets

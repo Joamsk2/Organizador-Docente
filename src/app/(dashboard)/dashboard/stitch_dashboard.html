@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Organizador Docente Premium Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3118ec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#121022",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass {
+            background: rgba(18, 16, 34, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<!-- Header Section -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-6 md:px-10 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-primary">
+<div class="size-8 flex items-center justify-center bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary text-2xl">school</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em]">Organizador Docente</h2>
+</div>
+<label class="hidden md:flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-slate-500 flex border-none bg-slate-100 dark:bg-slate-800 items-center justify-center pl-4 rounded-l-lg" data-icon="search">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-slate-900 dark:text-slate-100 focus:outline-0 focus:ring-2 focus:ring-primary/20 border-none bg-slate-100 dark:bg-slate-800 placeholder:text-slate-500 px-4 pl-2 text-base font-normal leading-normal" placeholder="Buscar alumnos, cursos..." value=""/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<nav class="hidden lg:flex items-center gap-6">
+<a class="text-primary text-sm font-semibold leading-normal border-b-2 border-primary pb-1" href="#">Dashboard</a>
+<a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Escuelas</a>
+<a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Cursos</a>
+<a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Planificación</a>
+</nav>
+<div class="flex gap-2">
+<button class="flex cursor-pointer items-center justify-center rounded-lg h-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-xl">notifications</span>
+</button>
+<button class="flex cursor-pointer items-center justify-center rounded-lg h-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-xl">settings</span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-white dark:border-slate-800 shadow-sm" data-alt="Teacher profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBEtR8bHUU2ga6V0ifyKX0VDAVj48BxpXFN5pZtztBoRQwuDCE8CtDYU1ss_JX5DZFsYChsWqJ234WKZuIz81L0oOh-DWdSyZJBSmxmIpP4FEgjYxmbJHG3sMc1Mb--aZ5ZOu0JGMspIMkHEQVlk9DsT0U2yqKAFoxhy84btufpKy97ItQ9Dy8m80TjoNKMI_uDab8GPrzmalz1YbKAHA_Cw61Ijok7SPPj8s7VOIj8mYjJRefEWxWmMTyel9CH00hgvCgN6zKFX6g");'></div>
+</div>
+</header>
+<main class="flex-1 px-6 md:px-10 py-8 max-w-[1400px] mx-auto w-full">
+<!-- Summary Section -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+<div class="glass flex flex-col gap-2 rounded-xl p-6 shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal uppercase tracking-wider">Escuelas Activas</p>
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">domain</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-bold leading-tight">6</p>
+<div class="text-emerald-600 text-xs font-medium flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-sm">trending_up</span> +1 esta semana
+                        </div>
+</div>
+<div class="glass flex flex-col gap-2 rounded-xl p-6 shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal uppercase tracking-wider">Cursos 2024</p>
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">book</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-bold leading-tight">12</p>
+<p class="text-slate-400 text-xs mt-1 italic">3 instituciones diferentes</p>
+</div>
+<div class="glass flex flex-col gap-2 rounded-xl p-6 shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal uppercase tracking-wider">Alumnos Totales</p>
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">group</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-bold leading-tight">340</p>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full mt-3 overflow-hidden">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+</div>
+<div class="glass flex flex-col gap-2 rounded-xl p-6 shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal uppercase tracking-wider">TPs Pendientes</p>
+<span class="material-symbols-outlined text-rose-500 bg-rose-500/10 p-2 rounded-lg">assignment_late</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-bold leading-tight">15</p>
+<div class="text-rose-500 text-xs font-medium flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-sm">schedule</span> 4 vencen hoy
+                        </div>
+</div>
+</div>
+<div class="flex flex-col lg:flex-row gap-8">
+<!-- Left: Agenda Timeline -->
+<div class="lg:w-2/3 flex flex-col gap-6">
+<div class="flex justify-between items-center mb-2">
+<h2 class="text-slate-900 dark:text-slate-100 tracking-tight text-2xl font-bold leading-tight">Mi Jornada Hoy</h2>
+<button class="text-primary text-sm font-semibold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm">calendar_month</span> Ver calendario completo
+                            </button>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+<div class="grid grid-cols-[60px_1fr] gap-x-4">
+<!-- Item 1 -->
+<div class="flex flex-col items-center">
+<div class="text-primary font-bold text-sm">08:00</div>
+<div class="w-[2px] bg-slate-100 dark:bg-slate-800 h-full my-2 relative">
+<div class="absolute -top-1 -left-[5px] size-3 rounded-full bg-primary ring-4 ring-primary/20"></div>
+</div>
+</div>
+<div class="pb-10">
+<div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex justify-between">
+<h3 class="text-slate-900 dark:text-slate-100 font-bold text-lg group-hover:text-primary transition-colors">Historia de 4to Año</h3>
+<span class="px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold uppercase tracking-wider h-fit">Aula 4</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">location_on</span> Colegio San Martín
+                                        </p>
+<div class="mt-4 flex items-center gap-3">
+<span class="text-xs bg-white dark:bg-slate-700 px-2 py-1 rounded border border-slate-200 dark:border-slate-600">Clase Magistral</span>
+<span class="text-xs text-slate-400">• Vayan leyendo Cap. 4</span>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex flex-col items-center">
+<div class="text-slate-500 font-bold text-sm">10:30</div>
+<div class="w-[2px] bg-slate-100 dark:bg-slate-800 h-full my-2 relative">
+<div class="absolute -top-1 -left-[5px] size-3 rounded-full bg-slate-300 dark:bg-slate-600 ring-4 ring-slate-100 dark:ring-slate-800"></div>
+</div>
+</div>
+<div class="pb-10">
+<div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex justify-between">
+<h3 class="text-slate-900 dark:text-slate-100 font-bold text-lg group-hover:text-primary transition-colors">Geografía Física</h3>
+<span class="px-2 py-1 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wider h-fit">Laboratorio</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">location_on</span> Instituto Belgrano
+                                        </p>
+<div class="mt-4 flex items-center gap-3">
+<span class="text-xs bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 px-2 py-1 rounded border border-rose-200 dark:border-rose-800 font-semibold">Evaluación Trimestral</span>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex flex-col items-center">
+<div class="text-slate-500 font-bold text-sm">13:00</div>
+<div class="w-[2px] bg-slate-100 dark:bg-slate-800 h-full my-2 relative">
+<div class="absolute -top-1 -left-[5px] size-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+</div>
+</div>
+<div class="pb-10">
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+<h3 class="text-slate-600 dark:text-slate-400 font-semibold">Tutoría &amp; Seguimiento</h3>
+<p class="text-slate-500 text-sm mt-1">Sala de Profesores - Colegio San Martín</p>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="flex flex-col items-center">
+<div class="text-slate-500 font-bold text-sm">15:00</div>
+<div class="w-[2px] bg-slate-100 dark:bg-slate-800 h-8 my-2 relative">
+<div class="absolute -top-1 -left-[5px] size-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+</div>
+</div>
+<div>
+<div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-primary/30 transition-all cursor-pointer group">
+<div class="flex justify-between">
+<h3 class="text-slate-900 dark:text-slate-100 font-bold text-lg group-hover:text-primary transition-colors">Historia Argentina I</h3>
+<span class="px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-bold uppercase tracking-wider h-fit">Aula 2</span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">location_on</span> Liceo Naval
+                                        </p>
+<div class="mt-4">
+<span class="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 font-semibold">Clase de Apoyo</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar -->
+<div class="lg:w-1/3 flex flex-col gap-8">
+<!-- Alert Card: Atencion Requerida -->
+<div class="flex flex-col gap-4">
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight flex items-center gap-2">
+<span class="material-symbols-outlined text-rose-500">warning</span>
+                                Atención Requerida
+                            </h2>
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
+<div class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Student profile 1" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWaq-0JksP4uCkQn3BnHaqUSqqTAl6jHujGw_Ok-uhrk3nUYyvTE0sp6m4e16hpexrlOneAX6JTlyphs1K8FJB6FqbM9xXl3nNs1dJdGlpoGvOH3-VP_a3k5IYQW4gfmXfeRrbjaXu-p-wVBCQmNHAH9NfW0SsLrdZVZ7hANgSL1zy_xw919ZFj0tQ7DvZSZUweJE223TD6uQejl9tZ4OVDneHoF7yU3tG7DqoBqXWTvtwFP2_TE3YF238nTw5O-hfdLemKmVoTm8"/>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100">Mateo García</p>
+<p class="text-xs text-rose-500 font-medium italic">Ausencias excesivas (3)</p>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">mail</span>
+</button>
+</div>
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
+<div class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Student profile 2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOYwgC8aotooyQq-WxIV2tXc7x3niw69ID37DU5K02H8ut1BY6Yyq2IFMuCH-5wPEF7TouRih5bNy19w77VdUS0QAbPWgJYugFofYBu4mnd66iPwoO2uxHXBj-0snzGD35uYVnvOOQz8el0FafuTzwqGZkiL9EpGaeuM4-jJFgETvuNrEji0tU2qFBruiYDX3n5-uGyPN9Ao2Ydzp6K_hrwl0SzQjdrkkUAZ_shChFh8YRpJqwRjVQBgS1BHtaRPJpZFZApzMncWY"/>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100">Sofía Rodríguez</p>
+<p class="text-xs text-amber-500 font-medium italic">TP No entregado: "Revolución de Mayo"</p>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">mail</span>
+</button>
+</div>
+<div class="p-3 bg-slate-50 dark:bg-slate-800/30 flex justify-center">
+<button class="text-primary text-xs font-bold uppercase tracking-wider hover:opacity-80 transition-opacity">Ver todos los casos</button>
+</div>
+</div>
+</div>
+<!-- Panel: TPs Globales -->
+<div class="flex flex-col gap-4">
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span>
+                                TPs Globales
+                            </h2>
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+<div class="flex flex-col gap-6">
+<!-- TP 1 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100">Análisis Cartográfico</p>
+<p class="text-[11px] text-slate-500 uppercase font-semibold">2do Año A - Belgrano</p>
+</div>
+<p class="text-xs font-bold text-primary">24/30</p>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[80%] rounded-full"></div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="text-[10px] text-slate-400 font-medium">Restan 6 por corregir</span>
+<button class="text-[10px] bg-primary/10 text-primary font-bold px-2 py-1 rounded hover:bg-primary hover:text-white transition-all">Calificar</button>
+</div>
+</div>
+<!-- TP 2 -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-end">
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100">Guerra Fría (Ensayo)</p>
+<p class="text-[11px] text-slate-500 uppercase font-semibold">5to Año - San Martín</p>
+</div>
+<p class="text-xs font-bold text-emerald-600">32/32</p>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+<div class="bg-emerald-500 h-full w-[100%] rounded-full"></div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">check_circle</span> Finalizado
+                                            </span>
+<button class="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold px-2 py-1 rounded">Reporte</button>
+</div>
+</div>
+<!-- TP 3 -->
+<div class="flex flex-col gap-2 opacity-75">
+<div class="flex justify-between items-end">
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100">Relieve Regional</p>
+<p class="text-[11px] text-slate-500 uppercase font-semibold">1er Año - Liceo Naval</p>
+</div>
+<p class="text-xs font-bold text-slate-400">0/28</p>
+</div>
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+<div class="bg-slate-300 dark:bg-slate-700 h-full w-[5%] rounded-full"></div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="text-[10px] text-slate-400 font-medium italic">Inicia el 15 de Octubre</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Quick Actions Mobile (Only visible on small screens) -->
+<div class="lg:hidden fixed bottom-6 right-6 z-50">
+<button class="bg-primary text-white size-14 rounded-full shadow-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl">add</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

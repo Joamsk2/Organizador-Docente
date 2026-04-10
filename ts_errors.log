@@ -1,0 +1,1 @@
+src/app/(dashboard)/cursos/[id]/alumnos/[studentId]/page.tsx(189,45): error TS2367: This comparison appears to be unintentional because the types '"pendiente" | null' and '"tarde"' have no overlap.
