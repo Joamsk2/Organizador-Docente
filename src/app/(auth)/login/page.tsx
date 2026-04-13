@@ -136,7 +136,7 @@ export default function LoginPage() {
                                 <input type="checkbox" className="w-4 h-4 rounded border-border text-primary-600 focus:ring-primary-500" />
                                 <span className="text-sm text-text-secondary">Recordarme</span>
                             </label>
-                            <Link href="/register" className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors">
+                            <Link href="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors">
                                 ¿Olvidaste tu contraseña?
                             </Link>
                         </div>
