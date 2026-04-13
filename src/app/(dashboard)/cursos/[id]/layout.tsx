@@ -29,7 +29,7 @@ export default async function CourseLayout({
     }
 
     return (
-        <div className="space-y-6 animate-fade-in max-w-7xl mx-auto flex flex-col h-[calc(100vh-80px)] lg:h-[calc(100vh-100px)]">
+        <div className="space-y-6 animate-fade-in max-w-7xl mx-auto flex flex-col h-full">
             <div className="flex-shrink-0 space-y-4">
                 <Link href="/escuelas" className="inline-flex items-center text-sm font-medium text-text-muted hover:text-text-primary transition-colors">
                     <ChevronLeft className="w-4 h-4 mr-1" />
