@@ -27,7 +27,7 @@ export function Sidebar({ userName = 'Docente', userEmail = '', mobileOpen, onMo
     const sidebarContent = (
         <div className="flex flex-col h-full">
             {/* Logo */}
-            <div className="flex items-center gap-3 px-5 py-6 border-b border-white/10">
+            <div id="tour-logo" className="flex items-center gap-3 px-5 py-6 border-b border-white/10">
                 <div className="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
                     <GraduationCap className="w-5 h-5 text-white" />
                 </div>
@@ -40,7 +40,7 @@ export function Sidebar({ userName = 'Docente', userEmail = '', mobileOpen, onMo
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            <nav id="tour-nav" className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
                     const Icon = item.icon
@@ -67,6 +67,7 @@ export function Sidebar({ userName = 'Docente', userEmail = '', mobileOpen, onMo
             <div className="px-3 py-4 border-t border-white/10">
                 <Link
                     href="/configuracion"
+                    id="tour-settings"
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/10 hover:text-white transition-all"
                 >
                     <Settings className="w-5 h-5" />

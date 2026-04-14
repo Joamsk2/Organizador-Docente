@@ -45,3 +45,16 @@ export function getAttendanceColor(status: string): string {
         default: return 'text-gray-600 bg-gray-50'
     }
 }
+
+export function getURL() {
+    let url =
+        process?.env?.NEXT_PUBLIC_SITE_URL ?? // Configurar en Vercel env vars
+        process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automático en Vercel
+        'http://localhost:3000/'
+    
+    // Asegurar que tenga protocolo
+    url = url.includes('http') ? url : `https://${url}`
+    // Asegurar que termine en /
+    url = url.endsWith('/') ? url : `${url}/`
+    return url
+}

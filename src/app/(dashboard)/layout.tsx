@@ -6,6 +6,7 @@ import { Topbar } from '@/components/layout/topbar'
 import { createClient } from '@/lib/supabase/client'
 
 import { PageTransition } from '@/components/layout/page-transition'
+import { OnboardingTour } from '@/components/ui/onboarding-tour'
 
 export default function DashboardLayout({
     children,
@@ -37,6 +38,7 @@ export default function DashboardLayout({
 
     return (
         <div className="min-h-screen bg-surface-secondary">
+            <OnboardingTour />
             <Sidebar
                 userName={userName}
                 userEmail={userEmail}
