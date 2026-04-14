@@ -2,6 +2,8 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 
 interface ChartData {
     name: string
@@ -16,6 +18,15 @@ interface MetricsChartProps {
 }
 
 export function MetricsChart({ data, title, dataKey, color }: MetricsChartProps) {
+    const { theme } = useTheme()
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    const isDark = mounted && theme === 'dark'
+
     return (
         <Card className="col-span-1 md:col-span-2 lg:col-span-3 border-border/50 shadow-sm rounded-2xl">
             <CardHeader className="pb-3 border-b border-border/50 bg-slate-50/50 dark:bg-slate-900/50 rounded-t-2xl">
@@ -26,23 +37,31 @@ export function MetricsChart({ data, title, dataKey, color }: MetricsChartProps)
             <CardContent className="p-6 h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? "#334155" : "#e2e8f0"} />
                         <XAxis
                             dataKey="name"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#64748b', fontSize: 12 }}
+                            tick={{ fill: isDark ? '#94a3b8' : '#64748b', fontSize: 12 }}
                             dy={10}
                         />
                         <YAxis
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#64748b', fontSize: 12 }}
+                            tick={{ fill: isDark ? '#94a3b8' : '#64748b', fontSize: 12 }}
                         />
                         <Tooltip
-                            cursor={{ fill: '#f1f5f9' }}
-                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', padding: '12px' }}
-                            labelStyle={{ color: '#0f172a', fontWeight: 'bold', marginBottom: '4px' }}
+                            cursor={{ fill: isDark ? '#1e293b' : '#f1f5f9' }}
+                            contentStyle={{ 
+                                borderRadius: '12px', 
+                                border: isDark ? '1px solid #334155' : 'none', 
+                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', 
+                                padding: '12px',
+                                backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                                color: isDark ? '#f8fafc' : '#0f172a'
+                            }}
+                            itemStyle={{ color: isDark ? '#f8fafc' : '#0f172a' }}
+                            labelStyle={{ color: isDark ? '#f8fafc' : '#0f172a', fontWeight: 'bold', marginBottom: '4px' }}
                         />
                         <Bar
                             dataKey={dataKey}

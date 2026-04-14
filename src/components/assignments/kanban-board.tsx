@@ -22,6 +22,8 @@ interface KanbanBoardProps {
     onStatusChange: (id: string, newStatus: AssignmentStatus) => void // Should handle the API call optimistically
     onEdit: (assignment: Assignment) => void
     onDelete: (id: string) => void
+    onConfigureAI: (assignment: Assignment) => void
+    onStudioAI: (assignment: Assignment) => void
 }
 
 const COLUMNS: { id: AssignmentStatus; title: string; color: string }[] = [
@@ -30,7 +32,7 @@ const COLUMNS: { id: AssignmentStatus; title: string; color: string }[] = [
     { id: 'entregado', title: 'Entregado', color: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-b-emerald-200 dark:border-b-emerald-800' }
 ]
 
-export function KanbanBoard({ assignments, onStatusChange, onEdit, onDelete }: KanbanBoardProps) {
+export function KanbanBoard({ assignments, onStatusChange, onEdit, onDelete, onConfigureAI, onStudioAI }: KanbanBoardProps) {
     const [activeId, setActiveId] = useState<string | null>(null)
 
     // Use memos for columns to avoid unnecessary recalculations
@@ -108,6 +110,8 @@ export function KanbanBoard({ assignments, onStatusChange, onEdit, onDelete }: K
                         assignments={col.items}
                         onEdit={onEdit}
                         onDelete={onDelete}
+                        onConfigureAI={onConfigureAI}
+                        onStudioAI={onStudioAI}
                     />
                 ))}
             </div>
@@ -122,6 +126,8 @@ export function KanbanBoard({ assignments, onStatusChange, onEdit, onDelete }: K
                             assignment={activeAssignment}
                             onEdit={() => { }}
                             onDelete={() => { }}
+                            onConfigureAI={onConfigureAI}
+                            onStudioAI={onStudioAI}
                         />
                     </div>
                 ) : null}

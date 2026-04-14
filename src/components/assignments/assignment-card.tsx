@@ -8,17 +8,17 @@ import { es } from 'date-fns/locale'
 import type { Assignment } from '@/hooks/use-assignments'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 interface AssignmentCardProps {
     assignment: Assignment
     onEdit: (assignment: Assignment) => void
     onDelete: (id: string) => void
+    onConfigureAI: (assignment: Assignment) => void
+    onStudioAI: (assignment: Assignment) => void
 }
 
-export function AssignmentCard({ assignment, onEdit, onDelete }: AssignmentCardProps) {
+export function AssignmentCard({ assignment, onEdit, onDelete, onConfigureAI, onStudioAI }: AssignmentCardProps) {
     const [showActions, setShowActions] = useState(false)
-    const router = useRouter()
 
     const {
         attributes,
@@ -71,7 +71,7 @@ export function AssignmentCard({ assignment, onEdit, onDelete }: AssignmentCardP
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     setShowActions(false)
-                                    router.push(`/cursos/${assignment.course_id}/trabajos/${assignment.id}/ai-config`)
+                                    onConfigureAI(assignment)
                                 }}
                                 className="w-full text-left px-3 py-2 text-xs text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 flex items-center gap-2 font-medium"
                             >
@@ -81,7 +81,7 @@ export function AssignmentCard({ assignment, onEdit, onDelete }: AssignmentCardP
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     setShowActions(false)
-                                    router.push(`/cursos/${assignment.course_id}/trabajos/${assignment.id}/ai-studio`)
+                                    onStudioAI(assignment)
                                 }}
                                 className="w-full text-left px-3 py-2 text-xs text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 flex items-center gap-2 font-medium"
                             >

@@ -45,9 +45,9 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
     const isLoading = loadingStudents
 
     return (
-        <div className="space-y-6 animate-fade-in max-w-6xl mx-auto pt-4">
+        <div className="space-y-6 animate-fade-in max-w-6xl mx-auto flex flex-col h-full pt-4">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
                 <div>
                     <h2 className="text-xl font-bold text-text-primary">Directorio de Alumnos</h2>
                     <p className="text-text-secondary mt-1">Gesti\u00f3n de alumnos del curso</p>
@@ -71,7 +71,7 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Filters & Search */}
-            <div className="flex flex-col sm:flex-row gap-4 bg-surface p-4 rounded-xl border border-border">
+            <div className="flex flex-col sm:flex-row gap-4 bg-surface p-4 rounded-xl border border-border flex-shrink-0">
                 <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                     <input
@@ -112,11 +112,11 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
                         )}
                     </div>
                 ) : (
-                    <div className="bg-surface rounded-xl border border-border overflow-hidden shadow-sm">
-                        <div className="overflow-x-auto">
+                    <div className="flex-1 flex flex-col min-h-0 bg-surface rounded-xl border border-border overflow-hidden shadow-sm">
+                        <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
                             <table className="w-full text-left border-collapse min-w-[800px]">
-                                <thead>
-                                    <tr className="bg-surface-secondary/50 border-b border-border">
+                                <thead className="sticky top-0 z-10 bg-surface">
+                                    <tr className="bg-surface-secondary/95 backdrop-blur-sm border-b border-border shadow-sm">
                                         <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Alumno</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Contacto</th>
                                         <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider hidden md:table-cell">DNI</th>
@@ -179,8 +179,7 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
                                 </tbody>
                             </table>
                         </div>
-
-                        <div className="px-6 py-4 border-t border-border bg-surface-secondary/30">
+                        <div className="px-6 py-4 border-t border-border bg-surface flex-shrink-0">
                             <p className="text-sm text-text-muted">Mostrando {filteredStudents.length} {filteredStudents.length === 1 ? 'alumno' : 'alumnos'}</p>
                         </div>
                     </div>

@@ -29,11 +29,11 @@ export function AttendanceGrid({ students, attendanceRecords, onSave, loading }:
     }
 
     return (
-        <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto custom-scrollbar">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-surface-secondary/50 border-b border-border">
+        <div className="flex-1 flex flex-col min-h-0 bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
+            <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
+                <table className="w-full text-left border-collapse min-w-[600px]">
+                    <thead className="sticky top-0 z-20 bg-surface">
+                        <tr className="bg-surface-secondary/95 backdrop-blur-sm border-b border-border shadow-sm">
                             <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider w-1/3">
                                 Alumno
                             </th>

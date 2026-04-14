@@ -46,7 +46,7 @@ export default function AsistenciaCoursePage({ params }: { params: Promise<{ id:
     }
 
     return (
-        <div className="space-y-6 animate-fade-in max-w-7xl mx-auto flex flex-col min-h-[calc(100vh-160px)] pt-4">
+        <div className="space-y-6 animate-fade-in max-w-7xl mx-auto flex flex-col h-full pt-4">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
                 <div>
@@ -102,7 +102,7 @@ export default function AsistenciaCoursePage({ params }: { params: Promise<{ id:
             )}
 
             {/* Grid Content */}
-            <div className="flex-1 min-h-0">
+            <div className="flex-1 min-h-0 flex flex-col">
                 {(loadingStudents || (loadingAttendance && attendance.length === 0)) ? (
                     <div className="flex flex-col items-center justify-center py-24 bg-surface/50 rounded-2xl border border-border/50">
                         <Loader2 className="w-10 h-10 text-primary-500 animate-spin mb-4" />
@@ -114,7 +114,7 @@ export default function AsistenciaCoursePage({ params }: { params: Promise<{ id:
                         <p className="text-text-secondary">Agregá alumnos a este curso desde el m\u00f3dulo de Alumnos.</p>
                     </div>
                 ) : (
-                    <div className="animate-slide-up">
+                    <div className="animate-slide-up flex flex-col flex-1 min-h-0">
                         <AttendanceGrid
                             students={students}
                             attendanceRecords={attendance}
@@ -123,12 +123,6 @@ export default function AsistenciaCoursePage({ params }: { params: Promise<{ id:
                         />
                     </div>
                 )}
-            </div>
-
-            <div className="pb-8">
-                <p className="text-xs text-text-muted text-center">
-                    Los datos se guardan autom\u00e1ticamente al seleccionar un estado.
-                </p>
             </div>
         </div>
     )

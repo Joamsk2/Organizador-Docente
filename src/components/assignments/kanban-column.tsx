@@ -13,9 +13,11 @@ interface KanbanColumnProps {
     assignments: Assignment[]
     onEdit: (assignment: Assignment) => void
     onDelete: (id: string) => void
+    onConfigureAI: (assignment: Assignment) => void
+    onStudioAI: (assignment: Assignment) => void
 }
 
-export function KanbanColumn({ status, title, color, assignments, onEdit, onDelete }: KanbanColumnProps) {
+export function KanbanColumn({ status, title, color, assignments, onEdit, onDelete, onConfigureAI, onStudioAI }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: status,
         data: { type: 'Column', status },
@@ -49,6 +51,8 @@ export function KanbanColumn({ status, title, color, assignments, onEdit, onDele
                             assignment={assignment}
                             onEdit={onEdit}
                             onDelete={onDelete}
+                            onConfigureAI={onConfigureAI}
+                            onStudioAI={onStudioAI}
                         />
                     ))}
                 </SortableContext>
