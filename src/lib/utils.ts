@@ -47,9 +47,15 @@ export function getAttendanceColor(status: string): string {
 }
 
 export function getURL() {
+    // 1. Priorizar el origen del navegador si estamos en el cliente
+    if (typeof window !== 'undefined') {
+        return window.location.origin + '/'
+    }
+
+    // 2. Fallback para SSR/Server Components
     let url =
-        process?.env?.NEXT_PUBLIC_SITE_URL ?? // Configurar en Vercel env vars
-        process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automático en Vercel
+        process?.env?.NEXT_PUBLIC_SITE_URL ?? // Configurado en Vercel
+        process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automático de Vercel (solo build time)
         'http://localhost:3000/'
     
     // Asegurar que tenga protocolo
@@ -58,3 +64,4 @@ export function getURL() {
     url = url.endsWith('/') ? url : `${url}/`
     return url
 }
+
