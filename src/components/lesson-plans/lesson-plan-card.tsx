@@ -72,26 +72,48 @@ export function LessonPlanCard({ plan, onEdit, onDelete }: LessonPlanCardProps) 
                 </div>
             </div>
 
-            <div className="flex-1 mt-2">
+            <div className="flex-1 mt-2 relative">
                 {plan.content ? (
-                    <p className="text-sm text-text-secondary line-clamp-3">
-                        {plan.content.replace(/<[^>]+>/g, '') /* Simple strip HTML if rich text */}
-                    </p>
+                    <div 
+                        className="text-sm text-text-secondary line-clamp-3 [&>p]:m-0 [&>ul]:list-disc [&>ul]:pl-5 [&>ol]:list-decimal [&>ol]:pl-5 [&>h1]:font-bold [&>h1]:text-base [&>h2]:font-semibold [&>h2]:text-sm"
+                        dangerouslySetInnerHTML={{ __html: plan.content }}
+                    />
                 ) : (
                     <p className="text-sm text-text-muted italic">Sin descripción detallada</p>
                 )}
             </div>
 
-            {/* Footer Stats */}
-            <div className="flex items-center gap-4 mt-auto pt-4 border-t border-border/50">
-                <div className="flex items-center gap-1.5 text-text-secondary" title={`${attachmentCount} archivos adjuntos`}>
-                    <Paperclip className="w-4 h-4" />
-                    <span className="text-sm font-medium">{attachmentCount}</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 text-text-secondary" title={`${plan.assignments_count} TPs vinculados`}>
-                    <FolderOpen className="w-4 h-4" />
-                    <span className="text-sm font-medium">{plan.assignments_count} TPs</span>
+            <div className="flex flex-col gap-3 mt-auto pt-4 border-t border-border/50">
+                {/* Visualizar adjuntos si existen */}
+                {plan.attachment_urls && plan.attachment_urls.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                        {plan.attachment_urls.map((url, idx) => {
+                            const urlParts = url.split('/')
+                            const rawName = urlParts[urlParts.length - 1]
+                            const displayFileName = decodeURIComponent(rawName).replace(/^\d+_/, '')
+                            return (
+                                <a 
+                                    key={idx} 
+                                    href={url} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-2 py-1 bg-surface-secondary text-xs font-medium text-text-secondary rounded-md hover:bg-primary-50 hover:text-primary-600 transition-colors border border-border"
+                                    title={displayFileName}
+                                >
+                                    <Paperclip className="w-3 h-3" />
+                                    <span className="truncate max-w-[120px]">{displayFileName}</span>
+                                </a>
+                            )
+                        })}
+                    </div>
+                )}
+                
+                <div className="flex items-center gap-4">
+                    {/* Only show paperclip count if we don't display individual files above, but we do, so no need! */}
+                    <div className="flex items-center gap-1.5 text-text-secondary" title={`${plan.assignments_count} TPs vinculados`}>
+                        <FolderOpen className="w-4 h-4" />
+                        <span className="text-sm font-medium">{plan.assignments_count} TPs vinculados</span>
+                    </div>
                 </div>
             </div>
         </div>
