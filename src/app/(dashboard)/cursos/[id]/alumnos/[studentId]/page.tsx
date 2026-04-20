@@ -366,12 +366,13 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                 </div>
             </div>
 
-            {/* Hidden Printable Component */}
-            <div className="overflow-hidden h-0 w-0 absolute">
+            {/* Hidden Printable Component — Must have explicit size for html2canvas */}
+            <div style={{ position: 'fixed', left: '-10000px', top: '0', width: '794px', height: '1123px', overflow: 'visible', zIndex: -1 }}>
                 <StudentReportPrintable
                     ref={printRef}
                     profile={profile}
                     observations={pdfNotes}
+                    persistentObservations={persistentObservations}
                     courseName="Curso Seleccionado"
                 />
             </div>

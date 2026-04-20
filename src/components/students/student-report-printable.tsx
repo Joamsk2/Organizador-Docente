@@ -3,20 +3,28 @@ import { StudentProfileData } from '@/hooks/use-student-profile'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
+interface Observation {
+    id: string;
+    date: string;
+    content: string;
+    teachers?: { full_name: string } | null;
+}
+
 interface Props {
     profile: StudentProfileData;
     observations: string;
+    persistentObservations?: Observation[];
     courseName?: string;
 }
 
 export const StudentReportPrintable = React.forwardRef<HTMLDivElement, Props>(
-    ({ profile, observations, courseName = 'Curso Actual' }, ref) => {
+    ({ profile, observations, persistentObservations = [], courseName = 'Curso Actual' }, ref) => {
         const { student, attendanceStats, gradesStats, assignmentStats } = profile
 
         // A4 Paper Size at 96 DPI: 794px x 1123px (approx)
         return (
-            <div className="absolute -left-[9999px] top-0 bg-white" style={{ width: '794px', minHeight: '1123px' }} ref={ref}>
-                <div className="w-full h-full p-12 flex flex-col font-sans text-gray-900 bg-white">
+            <div style={{ width: '794px', minHeight: '1123px', backgroundColor: '#ffffff', position: 'absolute', left: '-9999px', top: '0' }} ref={ref}>
+                <div style={{ width: '100%', height: '100%', padding: '48px', display: 'flex', flexDirection: 'column', fontFamily: 'sans-serif', color: '#111827', backgroundColor: '#ffffff' }}>
 
                     {/* Header */}
                     <div className="border-b-2 pb-6 mb-8 flex justify-between items-end" style={{ borderColor: '#3730a3' }}>
@@ -126,11 +134,33 @@ export const StudentReportPrintable = React.forwardRef<HTMLDivElement, Props>(
                         )}
                     </div>
 
-                    {/* Observaciones */}
+                    {/* Observaciones Persistentes (Historial de la DB) */}
+                    {persistentObservations.length > 0 && (
+                        <div className="mb-6">
+                            <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">Registro de Observaciones</h3>
+                            <div className="space-y-2">
+                                {persistentObservations.slice(0, 5).map((obs) => (
+                                    <div key={obs.id} className="p-3 bg-gray-50 rounded border border-gray-200">
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-xs font-semibold text-gray-500">
+                                                {format(new Date(obs.date), "dd 'de' MMMM, yyyy", { locale: es })}
+                                            </span>
+                                            {obs.teachers?.full_name && (
+                                                <span className="text-xs text-gray-400">{obs.teachers.full_name}</span>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-gray-700">{obs.content}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Observaciones del Modal (escrita al exportar) */}
                     {observations && (
                         <div className="mb-12">
-                            <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">Observaciones Pedagógicas</h3>
-                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 whitespace-pre-wrap text-sm text-gray-700 leading-relaxed min-h-[100px]">
+                            <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">Observaciones Pedagógicas Adicionales</h3>
+                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 whitespace-pre-wrap text-sm text-gray-700 leading-relaxed min-h-[60px]">
                                 {observations}
                             </div>
                         </div>
