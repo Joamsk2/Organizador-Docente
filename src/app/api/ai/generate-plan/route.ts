@@ -1,4 +1,4 @@
-import { google } from '@ai-sdk/google'
+import { geminiFlash } from '@/lib/ai/gemini'
 import { generateText } from 'ai'
 import { NextResponse } from 'next/server'
 
@@ -44,9 +44,10 @@ DEBES crear un contenido hiperprofesional. ESTRICTAMENTE utiliza la siguiente es
 `
 
         const { text } = await generateText({
-            model: google('gemini-2.5-flash'), 
+            model: geminiFlash, 
             prompt
         })
+
 
         // Sanitización para evitar que devuelva "```html" al principio
         const cleanHtml = text.replace(/```html/g, '').replace(/```/g, '').trim()

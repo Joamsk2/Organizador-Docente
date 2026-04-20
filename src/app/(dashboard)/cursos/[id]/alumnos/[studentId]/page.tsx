@@ -86,7 +86,26 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                 height: 1123,
                 windowWidth: 794,
                 windowHeight: 1123,
+                onclone: (clonedDoc) => {
+                    // html2canvas doesn't support modern color functions like 'lab' or 'oklch'.
+                    // We must deep-sanitize the cloned document to avoid crashes.
+                    const elements = clonedDoc.getElementsByTagName('*');
+                    for (let i = 0; i < elements.length; i++) {
+                        const el = elements[i] as HTMLElement;
+                        const styles = window.getComputedStyle(el);
+
+                        // If any computed color property uses lab or oklch, reset it or replace it.
+                        // For the report, we mostly care about text and borders.
+                        ['color', 'backgroundColor', 'borderColor', 'fill', 'stroke'].forEach(prop => {
+                            const val = styles[prop as any];
+                            if (val && (val.includes('lab(') || val.includes('oklch('))) {
+                                el.style[prop as any] = 'inherit'; // Fallback to parent or default
+                            }
+                        });
+                    }
+                }
             })
+
 
             const imgData = canvas.toDataURL('image/png')
             const pdf = new jsPDF({

@@ -19,11 +19,12 @@ export const StudentReportPrintable = React.forwardRef<HTMLDivElement, Props>(
                 <div className="w-full h-full p-12 flex flex-col font-sans text-gray-900 bg-white">
 
                     {/* Header */}
-                    <div className="border-b-2 border-primary-800 pb-6 mb-8 flex justify-between items-end">
+                    <div className="border-b-2 pb-6 mb-8 flex justify-between items-end" style={{ borderColor: '#3730a3' }}>
                         <div>
-                            <h1 className="text-3xl font-bold text-primary-900 mb-1">Informe de Seguimiento</h1>
-                            <p className="text-gray-600 font-medium tracking-wide uppercase text-sm">{courseName}</p>
+                            <h1 className="text-3xl font-bold mb-1" style={{ color: '#312e81' }}>Informe de Seguimiento</h1>
+                            <p className="font-medium tracking-wide uppercase text-sm" style={{ color: '#4b5563' }}>{courseName}</p>
                         </div>
+
                         <div className="text-right">
                             <p className="text-gray-500 text-sm">Fecha de emisión</p>
                             <p className="font-semibold">{format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}</p>
@@ -31,13 +32,14 @@ export const StudentReportPrintable = React.forwardRef<HTMLDivElement, Props>(
                     </div>
 
                     {/* Student Info Box */}
-                    <div className="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-200 flex justify-between items-center">
+                    <div className="rounded-lg p-6 mb-8 border flex justify-between items-center" style={{ backgroundColor: '#f9fafb', borderColor: '#e5e7eb' }}>
                         <div>
-                            <p className="text-sm text-gray-500 uppercase tracking-widest mb-1.5 font-semibold">Alumno</p>
+                            <p className="text-sm uppercase tracking-widest mb-1.5 font-semibold" style={{ color: '#6b7280' }}>Alumno</p>
                             <h2 className="text-2xl font-bold text-gray-900">{student?.last_name}, {student?.first_name}</h2>
-                            <p className="text-gray-600 mt-1">DNI: {student?.dni || 'No registrado'}</p>
+                            <p className="mt-1" style={{ color: '#4b5563' }}>DNI: {student?.dni || 'No registrado'}</p>
                         </div>
                     </div>
+
 
                     <div className="grid grid-cols-2 gap-8 mb-8">
                         {/* Attendance Resumen */}
@@ -94,11 +96,12 @@ export const StudentReportPrintable = React.forwardRef<HTMLDivElement, Props>(
 
                     {/* Grades Table */}
                     <div className="mb-8">
-                        <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">Desempeño Académico</h3>
+                        <h3 className="text-lg font-bold border-b pb-2 mb-4" style={{ color: '#1f2937', borderColor: '#e5e7eb' }}>Desempeño Académico</h3>
                         <div className="flex justify-between items-end mb-4">
-                            <span className="text-gray-600">Promedio General Acumulado:</span>
-                            <span className="text-xl font-bold text-primary-700">{gradesStats.average} / 10</span>
+                            <span style={{ color: '#4b5563' }}>Promedio General Acumulado:</span>
+                            <span className="text-xl font-bold" style={{ color: '#4338ca' }}>{gradesStats.average} / 10</span>
                         </div>
+
                         {gradesStats.recentGrades.length > 0 ? (
                             <table className="w-full text-left text-sm border-collapse">
                                 <thead>
