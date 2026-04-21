@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateObject } from 'ai'
-import { geminiFlashLite } from '@/lib/ai/gemini'
+import { google } from '@ai-sdk/google'
 import { studentReportSchema } from '@/lib/ai/schemas'
 import { REPORT_PROMPT } from '@/lib/ai/prompts'
 import { createClient } from '@/lib/supabase/server'
@@ -84,9 +84,10 @@ export async function POST(request: NextRequest) {
 
         // Build correction history summaries
         const correctionSummaries = corrections?.map(c => {
-            const sub = c.assignment_submissions as unknown as { assignments: { title: string } }
-            return `- ${sub?.assignments?.title || 'Evaluación'}: Nota ${c.teacher_override_grade || c.suggested_grade}. ${c.correction_summary || ''}`
-        }).join('\n') || 'Sin correcciones registradas.'
+            const sub = (Array.isArray(c.assignment_submissions) ? c.assignment_submissions[0] : c.assignment_submissions) as any;
+            const assignmentTitle = sub?.assignments?.title || 'Evaluación';
+            return `- ${assignmentTitle}: Nota ${c.teacher_override_grade || c.suggested_grade}. ${c.correction_summary || ''}`;
+        }).join('\n') || 'Sin correcciones registradas.';
 
         const observationsText = observations?.length
             ? observations.map(o => `- [${o.date}] ${o.teachers?.full_name || 'Docente'}: ${o.content}`).join('\n')
@@ -119,7 +120,7 @@ ${correctionSummaries}
 `.trim()
 
         const { object } = await generateObject({
-            model: geminiFlashLite,
+            model: google('gemini-2.0-flash-exp'),
             schema: studentReportSchema,
             system: REPORT_PROMPT,
             prompt: studentData,
@@ -141,7 +142,7 @@ ${correctionSummaries}
             risk_level: object.overall_trend === 'declining' ? 'high' :
                 object.overall_trend === 'stable' ? 'medium' : 'low',
             corrections_history: corrections?.map(c => {
-                const sub = c.assignment_submissions as unknown as { assignments: { title: string } }
+                const sub = (Array.isArray(c.assignment_submissions) ? c.assignment_submissions[0] : c.assignment_submissions) as any;
                 return {
                     assignment_title: sub?.assignments?.title || 'Evaluación',
                     date: c.created_at,
