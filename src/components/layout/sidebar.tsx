@@ -11,6 +11,7 @@ import { APP_NAME } from '@/lib/constants'
 
 const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Mi Agenda', href: '/agenda', icon: CalendarCheck },
     { label: 'Escuelas', href: '/escuelas', icon: Building2 },
 ]
 

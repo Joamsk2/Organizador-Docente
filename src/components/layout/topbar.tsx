@@ -6,8 +6,10 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTeacher } from '@/hooks/use-teacher'
+import { motion, AnimatePresence } from 'framer-motion'
+import { cn } from '@/lib/utils'
 
 interface TopbarProps {
     onMobileMenuToggle: () => void
@@ -16,12 +18,29 @@ interface TopbarProps {
 export function Topbar({ onMobileMenuToggle }: TopbarProps) {
     const { theme, setTheme } = useTheme()
     const router = useRouter()
-    const { updatePreferences } = useTeacher()
+    const { teacher, fetchTeacher, updatePreferences } = useTeacher()
     const [mounted, setMounted] = useState(false)
+    const [showNotifications, setShowNotifications] = useState(false)
+    const notificationRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         setMounted(true)
-    }, [])
+        fetchTeacher()
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+                setShowNotifications(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [fetchTeacher])
+
+    const notifications = [
+        { id: 1, title: 'Alumnos en riesgo', message: 'Se han detectado 3 alumnos con baja asistencia.', time: 'Hace 5 min', type: 'alert' },
+        { id: 2, title: 'Nuevas entregas', message: 'Tienes 5 trabajos prácticos pendientes de corregir.', time: 'Hace 1 hora', type: 'info' },
+        { id: 3, title: 'Sistema actualizado', message: 'Hemos añadido el nuevo módulo de Agenda.', time: 'Hace 2 horas', type: 'success' },
+    ]
 
     const handleLogout = async () => {
         const supabase = createClient()
@@ -64,10 +83,49 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
                 </button>
 
                 {/* Notifications */}
-                <button id="tour-notifications" className="relative p-2 rounded-lg text-text-secondary hover:bg-surface-hover transition-colors">
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-                </button>
+                <div className="relative" ref={notificationRef}>
+                    <button
+                        id="tour-notifications"
+                        onClick={() => setShowNotifications(!showNotifications)}
+                        className={cn(
+                            "relative p-2 rounded-lg transition-colors",
+                            showNotifications ? "bg-primary-50 text-primary-600" : "text-text-secondary hover:bg-surface-hover"
+                        )}
+                    >
+                        <Bell className="w-5 h-5" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-surface" />
+                    </button>
+
+                    <AnimatePresence>
+                        {showNotifications && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                transition={{ duration: 0.2 }}
+                                className="absolute right-0 mt-2 w-80 bg-surface border border-border rounded-2xl shadow-2xl z-50 overflow-hidden"
+                            >
+                                <div className="p-4 border-b border-border bg-surface-secondary/50">
+                                    <h3 className="font-black text-text-primary">Notificaciones</h3>
+                                </div>
+                                <div className="max-h-[300px] overflow-y-auto">
+                                    {notifications.map((n) => (
+                                        <div key={n.id} className="p-4 border-b border-border last:border-0 hover:bg-surface-secondary transition-colors cursor-pointer">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <p className="text-sm font-bold text-text-primary">{n.title}</p>
+                                                <span className="text-[10px] text-text-muted font-medium">{n.time}</span>
+                                            </div>
+                                            <p className="text-xs text-text-secondary leading-relaxed">{n.message}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="p-3 bg-surface-secondary/30 text-center">
+                                    <button className="text-xs font-bold text-primary-600 hover:underline">Marcar todas como leídas</button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
 
                 {/* Theme toggle */}
                 <button

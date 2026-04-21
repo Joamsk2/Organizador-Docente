@@ -274,10 +274,13 @@ export default function DashboardPage() {
                                     <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                                 </Link>
                             )}
-                            <button className="flex items-center gap-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 px-6 py-3.5 font-bold hover:bg-white/20 transition-all">
+                            <Link 
+                                href="/agenda"
+                                className="flex items-center gap-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 px-6 py-3.5 font-bold hover:bg-white/20 transition-all text-white"
+                            >
                                 <Calendar className="w-5 h-5" />
                                 Ver mi agenda
-                            </button>
+                            </Link>
                         </div>
                     </div>
 
@@ -356,7 +359,12 @@ export default function DashboardPage() {
                             </h2>
                             <p className="text-text-secondary font-medium pl-13">Horarios de clase asignados</p>
                         </div>
-                        <button className="text-sm font-bold text-primary-600 hover:text-primary-700 underline underline-offset-4">Ver calendario completo</button>
+                        <Link 
+                            href="/agenda"
+                            className="text-sm font-bold text-primary-600 hover:text-primary-700 underline underline-offset-4"
+                        >
+                            Ver calendario completo
+                        </Link>
                     </div>
 
                     {loading ? (
