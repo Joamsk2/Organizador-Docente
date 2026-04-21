@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Download, Award, AlertTriangle, AlertCircle, FileText, Calendar, CheckCircle2, Clock, MessageSquare, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Download, Award, AlertTriangle, AlertCircle, FileText, Calendar, CheckCircle2, Clock, MessageSquare, Plus, Trash2, Sparkles } from 'lucide-react'
 import { useStudentProfile } from '@/hooks/use-student-profile'
 import { useObservations } from '@/hooks/use-observations'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
@@ -30,6 +30,8 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
 
     const [isExportModalOpen, setIsExportModalOpen] = useState(false)
     const [pdfNotes, setPdfNotes] = useState('')
+    const [aiSynthesis, setAiSynthesis] = useState('')
+    const [isGeneratingSynthesis, setIsGeneratingSynthesis] = useState(false)
     const [newObservation, setNewObservation] = useState('')
     const [isAddingObservation, setIsAddingObservation] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
@@ -68,6 +70,35 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
             name: format(new Date(g.created_at || new Date()), 'dd/MMM', { locale: es }),
             Nota: Number(g.value)
         }))
+
+    const handleGenerateSynthesis = async () => {
+        setIsGeneratingSynthesis(true)
+        try {
+            const res = await fetch('/api/ai/generate-report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    student_id: studentId,
+                    course_id: courseId,
+                    period: '1er_trimestre'
+                })
+            })
+
+            if (!res.ok) {
+                const error = await res.json()
+                throw new Error(error.error || 'Error al generar síntesis')
+            }
+
+            const data = await res.json()
+            setAiSynthesis(data.report.narrative_summary)
+            toast.success('Síntesis generada por IA')
+        } catch (error: any) {
+            console.error('Error generating AI synthesis:', error)
+            toast.error(error.message || 'Error al generar la síntesis con IA')
+        } finally {
+            setIsGeneratingSynthesis(false)
+        }
+    }
 
     const handleGeneratePDF = async () => {
         if (!printRef.current) return
@@ -373,6 +404,7 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                     profile={profile}
                     observations={pdfNotes}
                     persistentObservations={persistentObservations}
+                    aiSynthesis={aiSynthesis}
                     courseName="Curso Seleccionado"
                 />
             </div>
@@ -392,19 +424,51 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                                 </svg>
                             </button>
                         </div>
-                        <div className="p-6">
-                            <label className="block text-sm font-medium text-text-secondary mb-2">
-                                Observaciones Pedagógicas (Opcional)
-                            </label>
-                            <p className="text-xs text-text-muted mb-3">
-                                Podés agregar un breve comentario sobre el desempeño del alumno que aparecerá al final del informe oficial.
-                            </p>
-                            <textarea
-                                value={pdfNotes}
-                                onChange={(e) => setPdfNotes(e.target.value)}
-                                placeholder="Ej: Juan demuestra un gran avance en razonamiento lógico, pero sugerimos reforzar la lectura comprensiva..."
-                                className="w-full px-3 py-2 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[120px] resize-y"
-                            />
+                        <div className="p-6 space-y-5">
+                            {/* AI Synthesis Section */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="block text-sm font-medium text-text-secondary">
+                                        Síntesis Cualitativa (IA)
+                                    </label>
+                                    <button
+                                        onClick={handleGenerateSynthesis}
+                                        disabled={isGeneratingSynthesis || isExporting}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-medium transition-all shadow-sm"
+                                    >
+                                        {isGeneratingSynthesis ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                                        {isGeneratingSynthesis ? 'Analizando...' : 'Generar con IA'}
+                                    </button>
+                                </div>
+                                <p className="text-xs text-text-muted mb-2">
+                                    La IA analiza calificaciones, asistencia y observaciones para generar un resumen pedagógico profesional.
+                                </p>
+                                {aiSynthesis ? (
+                                    <div className="p-3 bg-purple-50 dark:bg-purple-900/10 border border-purple-200 dark:border-purple-800/30 rounded-lg">
+                                        <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">{aiSynthesis}</p>
+                                    </div>
+                                ) : (
+                                    <div className="p-3 bg-surface-secondary/50 border border-dashed border-border rounded-lg text-center">
+                                        <p className="text-xs text-text-muted italic">Hacé click en "Generar con IA" para obtener la síntesis automática</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Manual Notes Section */}
+                            <div>
+                                <label className="block text-sm font-medium text-text-secondary mb-2">
+                                    Observaciones Adicionales (Opcional)
+                                </label>
+                                <p className="text-xs text-text-muted mb-2">
+                                    Podés agregar un comentario manual que aparecerá al final del informe.
+                                </p>
+                                <textarea
+                                    value={pdfNotes}
+                                    onChange={(e) => setPdfNotes(e.target.value)}
+                                    placeholder="Ej: Juan demuestra un gran avance en razonamiento lógico, pero sugerimos reforzar la lectura comprensiva..."
+                                    className="w-full px-3 py-2 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[80px] resize-y text-sm"
+                                />
+                            </div>
                         </div>
                         <div className="px-6 py-4 border-t border-border bg-surface-secondary/50 flex justify-end gap-3">
                             <button

@@ -14,11 +14,12 @@ interface Props {
     profile: StudentProfileData;
     observations: string;
     persistentObservations?: Observation[];
+    aiSynthesis?: string;
     courseName?: string;
 }
 
 export const StudentReportPrintable = React.forwardRef<HTMLDivElement, Props>(
-    ({ profile, observations, persistentObservations = [], courseName = 'Curso Actual' }, ref) => {
+    ({ profile, observations, persistentObservations = [], aiSynthesis = '', courseName = 'Curso Actual' }, ref) => {
         const { student, attendanceStats, gradesStats, assignmentStats } = profile
 
         // A4 Paper Size at 96 DPI: 794px x 1123px (approx)
@@ -101,6 +102,16 @@ export const StudentReportPrintable = React.forwardRef<HTMLDivElement, Props>(
                             )}
                         </div>
                     </div>
+
+                    {/* AI Synthesis */}
+                    {aiSynthesis && (
+                        <div className="mb-8">
+                            <h3 className="text-lg font-bold border-b pb-2 mb-4" style={{ color: '#1f2937', borderColor: '#e5e7eb' }}>Síntesis Cualitativa</h3>
+                            <div className="p-4 rounded-lg border" style={{ backgroundColor: '#f5f3ff', borderColor: '#c4b5fd' }}>
+                                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#374151' }}>{aiSynthesis}</p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Grades Table */}
                     <div className="mb-8">
