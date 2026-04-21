@@ -126,6 +126,27 @@ export function useAttendance(courseId: string | null, date: string | null) {
         }
     }
 
+    const markAllAsPresent = async (studentIds: string[]) => {
+        if (!courseId || !date) return false
+
+        setLoading(true)
+        try {
+            for (const studentId of studentIds) {
+                const hasAttendance = attendance.some(a => a.student_id === studentId)
+                if (!hasAttendance) {
+                    await saveAttendance(studentId, 'presente')
+                }
+            }
+            toast.success('Asistencia actualizada')
+            return true
+        } catch (error) {
+            toast.error('Error en operación masiva')
+            return false
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return {
         attendance,
         loading,
