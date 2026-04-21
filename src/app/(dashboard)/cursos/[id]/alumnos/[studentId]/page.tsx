@@ -332,6 +332,36 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
 
             </div>
 
+            {/* Notas de Asistencia (Desempeño Diario) */}
+            <div className="bg-surface border border-border rounded-xl p-6 shadow-sm mt-6">
+                <div className="flex items-center gap-2 mb-6">
+                    <Calendar className="w-5 h-5 text-primary-500" />
+                    <h3 className="text-lg font-bold text-text-primary">Desempeño en Clase (Diario)</h3>
+                </div>
+                <p className="text-xs text-text-muted mb-4 -mt-4">
+                    Estas notas fueron registradas durante el pase de asistencia y se utilizan para la síntesis cualitativa.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {attendanceStats.attendanceNotes && attendanceStats.attendanceNotes.length > 0 ? (
+                        attendanceStats.attendanceNotes.map((note) => (
+                            <div key={note.id} className="p-4 rounded-lg bg-primary-50/30 border border-primary-100 dark:bg-primary-900/10 dark:border-primary-800/30 relative">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary-100 text-primary-700 dark:bg-primary-900/60 dark:text-primary-300">
+                                        {format(new Date(note.date), "dd 'de' MMMM", { locale: es })}
+                                    </span>
+                                </div>
+                                <p className="text-sm text-text-primary italic">"{note.notes}"</p>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full py-8 text-center bg-surface-secondary/30 rounded-lg border border-dashed border-border">
+                            <p className="text-sm text-text-muted italic">No hay notas de desempeño diario registradas aún</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Registro de Observaciones */}
             <div className="bg-surface border border-border rounded-xl p-6 shadow-sm mt-6">
                 <div className="flex items-center justify-between mb-6">

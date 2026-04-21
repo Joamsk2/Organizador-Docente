@@ -22,9 +22,9 @@ interface AttendanceGridProps {
 export function AttendanceGrid({ students, attendanceRecords, onSave, loading }: AttendanceGridProps) {
     const [savingId, setSavingId] = useState<string | null>(null)
 
-    const handleStatusChange = async (studentId: string, status: AttendanceStatus) => {
+    const handleStatusChange = async (studentId: string, status: AttendanceStatus, notes?: string) => {
         setSavingId(studentId)
-        await onSave(studentId, status)
+        await onSave(studentId, status, notes)
         setSavingId(null)
     }
 
@@ -105,7 +105,7 @@ export function AttendanceGrid({ students, attendanceRecords, onSave, loading }:
                                                 title={record?.notes || "Agregar nota"}
                                                 onClick={() => {
                                                     const note = prompt("Notas de asistencia:", record?.notes || "")
-                                                    if (note !== null) handleStatusChange(student.id, (currentStatus || 'presente') as AttendanceStatus)
+                                                    if (note !== null) handleStatusChange(student.id, (currentStatus || 'presente') as AttendanceStatus, note)
                                                 }}
                                             >
                                                 <MessageSquare className="w-4 h-4" />

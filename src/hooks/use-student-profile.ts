@@ -21,6 +21,7 @@ export interface StudentProfileData {
         justified: number
         percentage: number
         recentAttendance: Attendance[]
+        attendanceNotes: Attendance[]
     }
     gradesStats: {
         average: number
@@ -129,7 +130,8 @@ export function useStudentProfile(studentId: string, courseId: string) {
                     late: lates,
                     justified: justified,
                     percentage: attendancePercentage,
-                    recentAttendance: att.slice(0, 5) // Last 5
+                    recentAttendance: att.slice(0, 5), // Last 5
+                    attendanceNotes: att.filter(a => a.notes && a.notes.trim() !== '') // All with notes
                 },
                 gradesStats: {
                     average: average,
