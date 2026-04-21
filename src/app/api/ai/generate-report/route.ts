@@ -182,10 +182,10 @@ ${correctionSummaries}
             },
         })
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Report generation error:', error)
         return NextResponse.json(
-            { error: 'Error al generar el informe', details: error.message || String(error) },
+            { error: 'Error al generar el informe' },
             { status: 500 }
         )
     }
