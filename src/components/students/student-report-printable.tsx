@@ -22,170 +22,181 @@ export const StudentReportPrintable = React.forwardRef<HTMLDivElement, Props>(
     ({ profile, observations, persistentObservations = [], aiSynthesis = '', courseName = 'Curso Actual' }, ref) => {
         const { student, attendanceStats, gradesStats, assignmentStats } = profile
 
-        // A4 Paper Size at 96 DPI: 794px x 1123px (approx)
+        // A4 Paper Size at 96 DPI: 794px x 1123px
+        // ALL STYLES MUST BE INLINE for html2canvas compatibility (no Tailwind classes)
         return (
-            <div style={{ width: '794px', minHeight: '1123px', backgroundColor: '#ffffff', position: 'absolute', left: '-9999px', top: '0' }} ref={ref}>
-                <div style={{ width: '100%', height: '100%', padding: '48px', display: 'flex', flexDirection: 'column', fontFamily: 'sans-serif', color: '#111827', backgroundColor: '#ffffff' }}>
+            <div
+                ref={ref}
+                style={{
+                    width: '794px',
+                    minHeight: '1123px',
+                    backgroundColor: '#ffffff',
+                    position: 'absolute',
+                    left: '-9999px',
+                    top: '0',
+                    fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+                    color: '#111827',
+                    fontSize: '13px',
+                    lineHeight: '1.5',
+                }}
+            >
+                <div style={{ padding: '40px 48px', display: 'flex', flexDirection: 'column', minHeight: '1123px' }}>
 
-                    {/* Header */}
-                    <div className="border-b-2 pb-6 mb-8 flex justify-between items-end" style={{ borderColor: '#3730a3' }}>
+                    {/* ── Header ── */}
+                    <div style={{ borderBottom: '3px solid #3730a3', paddingBottom: '16px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                         <div>
-                            <h1 className="text-3xl font-bold mb-1" style={{ color: '#312e81' }}>Informe de Seguimiento</h1>
-                            <p className="font-medium tracking-wide uppercase text-sm" style={{ color: '#4b5563' }}>{courseName}</p>
+                            <h1 style={{ fontSize: '26px', fontWeight: 700, color: '#312e81', margin: '0 0 6px 0' }}>Informe de Seguimiento</h1>
+                            <p style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '1.5px', margin: 0 }}>{courseName}</p>
                         </div>
-
-                        <div className="text-right">
-                            <p className="text-gray-500 text-sm">Fecha de emisión</p>
-                            <p className="font-semibold">{format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}</p>
+                        <div style={{ textAlign: 'right' }}>
+                            <p style={{ fontSize: '11px', color: '#9ca3af', margin: '0 0 2px 0' }}>Fecha de emisión</p>
+                            <p style={{ fontSize: '13px', fontWeight: 600, color: '#374151', margin: 0 }}>{format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}</p>
                         </div>
                     </div>
 
-                    {/* Student Info Box */}
-                    <div className="rounded-lg p-6 mb-8 border flex justify-between items-center" style={{ backgroundColor: '#f9fafb', borderColor: '#e5e7eb' }}>
-                        <div>
-                            <p className="text-sm uppercase tracking-widest mb-1.5 font-semibold" style={{ color: '#6b7280' }}>Alumno</p>
-                            <h2 className="text-2xl font-bold text-gray-900">{student?.last_name}, {student?.first_name}</h2>
-                            <p className="mt-1" style={{ color: '#4b5563' }}>DNI: {student?.dni || 'No registrado'}</p>
-                        </div>
+                    {/* ── Student Info Box ── */}
+                    <div style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '16px 20px', marginBottom: '24px' }}>
+                        <p style={{ fontSize: '10px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '2px', margin: '0 0 4px 0' }}>Alumno</p>
+                        <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#111827', margin: '0 0 2px 0' }}>{student?.last_name}, {student?.first_name}</h2>
+                        <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>DNI: {student?.dni || 'No registrado'}</p>
                     </div>
 
+                    {/* ── Stats Grid (2 columns) ── */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
 
-                    <div className="grid grid-cols-2 gap-8 mb-8">
-                        {/* Attendance Resumen */}
+                        {/* Attendance */}
                         <div>
-                            <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">Control de Asistencia</h3>
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">Porcentaje de Presentismo</span>
-                                    <span className={`font-bold ${attendanceStats.percentage >= 80 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                        {attendanceStats.percentage}%
-                                    </span>
+                            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#1f2937', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px', marginBottom: '10px' }}>Control de Asistencia</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: '#4b5563' }}>Porcentaje de Presentismo</span>
+                                    <span style={{ fontWeight: 700, color: attendanceStats.percentage >= 80 ? '#059669' : '#ef4444' }}>{attendanceStats.percentage}%</span>
                                 </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500">Clases Registradas</span>
-                                    <span className="font-medium text-gray-800">{attendanceStats.total}</span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                                    <span style={{ color: '#6b7280' }}>Clases Registradas</span>
+                                    <span style={{ fontWeight: 500, color: '#374151' }}>{attendanceStats.total}</span>
                                 </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500">Inasistencias</span>
-                                    <span className="font-medium text-gray-800">{attendanceStats.absent}</span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                                    <span style={{ color: '#6b7280' }}>Inasistencias</span>
+                                    <span style={{ fontWeight: 500, color: '#374151' }}>{attendanceStats.absent}</span>
                                 </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500">Tardanzas / Retiros</span>
-                                    <span className="font-medium text-gray-800">{attendanceStats.late}</span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                                    <span style={{ color: '#6b7280' }}>Tardanzas / Retiros</span>
+                                    <span style={{ fontWeight: 500, color: '#374151' }}>{attendanceStats.late}</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Assignments Resumen */}
+                        {/* Assignments */}
                         <div>
-                            <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">Obligaciones Prácticas</h3>
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-gray-600">Ratio de Cumplimiento</span>
-                                    <span className={`font-bold ${assignmentStats.deliveryRate >= 80 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                        {assignmentStats.deliveryRate}%
-                                    </span>
+                            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#1f2937', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px', marginBottom: '10px' }}>Obligaciones Prácticas</h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span style={{ color: '#4b5563' }}>Ratio de Cumplimiento</span>
+                                    <span style={{ fontWeight: 700, color: assignmentStats.deliveryRate >= 80 ? '#059669' : '#ef4444' }}>{assignmentStats.deliveryRate}%</span>
                                 </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500">Trabajos Asignados</span>
-                                    <span className="font-medium text-gray-800">{assignmentStats.totalAssigned}</span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                                    <span style={{ color: '#6b7280' }}>Trabajos Asignados</span>
+                                    <span style={{ fontWeight: 500, color: '#374151' }}>{assignmentStats.totalAssigned}</span>
                                 </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-500">Trabajos Entregados</span>
-                                    <span className="font-medium text-gray-800">{assignmentStats.delivered}</span>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                                    <span style={{ color: '#6b7280' }}>Trabajos Entregados</span>
+                                    <span style={{ fontWeight: 500, color: '#374151' }}>{assignmentStats.delivered}</span>
                                 </div>
                             </div>
                             {assignmentStats.totalAssigned > assignmentStats.delivered && (
-                                <div className="mt-4 p-3 bg-amber-50 rounded border border-amber-200">
-                                    <p className="text-xs text-amber-800 font-medium">Atención: El alumno adeuda o tiene pendientes {assignmentStats.totalAssigned - assignmentStats.delivered} trabajos prácticos.</p>
+                                <div style={{ marginTop: '10px', padding: '8px 10px', backgroundColor: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '6px' }}>
+                                    <p style={{ fontSize: '11px', color: '#92400e', fontWeight: 500, margin: 0 }}>
+                                        Atención: El alumno adeuda {assignmentStats.totalAssigned - assignmentStats.delivered} trabajos prácticos.
+                                    </p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* AI Synthesis */}
+                    {/* ── AI Synthesis ── */}
                     {aiSynthesis && (
-                        <div className="mb-8">
-                            <h3 className="text-lg font-bold border-b pb-2 mb-4" style={{ color: '#1f2937', borderColor: '#e5e7eb' }}>Síntesis Cualitativa</h3>
-                            <div className="p-4 rounded-lg border" style={{ backgroundColor: '#f5f3ff', borderColor: '#c4b5fd' }}>
-                                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#374151' }}>{aiSynthesis}</p>
+                        <div style={{ marginBottom: '24px' }}>
+                            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#1f2937', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px', marginBottom: '10px' }}>Síntesis Cualitativa</h3>
+                            <div style={{ padding: '12px 14px', backgroundColor: '#f5f3ff', border: '1px solid #c4b5fd', borderRadius: '8px' }}>
+                                <p style={{ fontSize: '12px', lineHeight: '1.7', color: '#374151', margin: 0, whiteSpace: 'pre-wrap' }}>{aiSynthesis}</p>
                             </div>
                         </div>
                     )}
 
-                    {/* Grades Table */}
-                    <div className="mb-8">
-                        <h3 className="text-lg font-bold border-b pb-2 mb-4" style={{ color: '#1f2937', borderColor: '#e5e7eb' }}>Desempeño Académico</h3>
-                        <div className="flex justify-between items-end mb-4">
-                            <span style={{ color: '#4b5563' }}>Promedio General Acumulado:</span>
-                            <span className="text-xl font-bold" style={{ color: '#4338ca' }}>{gradesStats.average} / 10</span>
+                    {/* ── Grades Table ── */}
+                    <div style={{ marginBottom: '24px' }}>
+                        <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#1f2937', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px', marginBottom: '10px' }}>Desempeño Académico</h3>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
+                            <span style={{ color: '#6b7280', fontSize: '13px' }}>Promedio General Acumulado:</span>
+                            <span style={{ fontSize: '18px', fontWeight: 700, color: '#4338ca' }}>{gradesStats.average} / 10</span>
                         </div>
 
                         {gradesStats.recentGrades.length > 0 ? (
-                            <table className="w-full text-left text-sm border-collapse">
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                                 <thead>
-                                    <tr className="bg-gray-100/50">
-                                        <th className="py-2 mb-1 border-b border-gray-300 font-medium text-gray-500">Categoría / Instancia</th>
-                                        <th className="py-2 mb-1 border-b border-gray-300 font-medium text-gray-500">Periodo</th>
-                                        <th className="py-2 mb-1 border-b border-gray-300 font-medium text-gray-500 text-right">Calificación</th>
+                                    <tr>
+                                        <th style={{ textAlign: 'left', padding: '8px 6px', borderBottom: '2px solid #d1d5db', fontWeight: 600, color: '#6b7280', fontSize: '11px' }}>Categoría / Instancia</th>
+                                        <th style={{ textAlign: 'left', padding: '8px 6px', borderBottom: '2px solid #d1d5db', fontWeight: 600, color: '#6b7280', fontSize: '11px' }}>Periodo</th>
+                                        <th style={{ textAlign: 'right', padding: '8px 6px', borderBottom: '2px solid #d1d5db', fontWeight: 600, color: '#6b7280', fontSize: '11px' }}>Calificación</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {gradesStats.recentGrades.slice(0, 8).map(g => (
-                                        <tr key={g.id} className="border-b border-gray-100">
-                                            <td className="py-2.5 text-gray-800 font-medium">{g.category}</td>
-                                            <td className="py-2.5 text-gray-500 capitalize">{g.period}</td>
-                                            <td className="py-2.5 text-right font-bold text-gray-900">{g.value}</td>
+                                        <tr key={g.id}>
+                                            <td style={{ padding: '7px 6px', borderBottom: '1px solid #f3f4f6', color: '#374151', fontWeight: 500 }}>{g.category}</td>
+                                            <td style={{ padding: '7px 6px', borderBottom: '1px solid #f3f4f6', color: '#6b7280', textTransform: 'capitalize' }}>{g.period}</td>
+                                            <td style={{ padding: '7px 6px', borderBottom: '1px solid #f3f4f6', color: '#111827', fontWeight: 700, textAlign: 'right' }}>{g.value}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         ) : (
-                            <p className="text-sm text-gray-500 italic">No hay calificaciones registradas aún en este ciclo.</p>
+                            <p style={{ fontSize: '12px', color: '#9ca3af', fontStyle: 'italic' }}>No hay calificaciones registradas aún en este ciclo.</p>
                         )}
                     </div>
 
-                    {/* Observaciones Persistentes (Historial de la DB) */}
+                    {/* ── Persistent Observations (from DB) ── */}
                     {persistentObservations.length > 0 && (
-                        <div className="mb-6">
-                            <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">Registro de Observaciones</h3>
-                            <div className="space-y-2">
-                                {persistentObservations.slice(0, 5).map((obs) => (
-                                    <div key={obs.id} className="p-3 bg-gray-50 rounded border border-gray-200">
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-xs font-semibold text-gray-500">
-                                                {format(new Date(obs.date), "dd 'de' MMMM, yyyy", { locale: es })}
-                                            </span>
-                                            {obs.teachers?.full_name && (
-                                                <span className="text-xs text-gray-400">{obs.teachers.full_name}</span>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-gray-700">{obs.content}</p>
+                        <div style={{ marginBottom: '20px' }}>
+                            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#1f2937', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px', marginBottom: '10px' }}>Registro de Observaciones</h3>
+                            {persistentObservations.slice(0, 5).map((obs) => (
+                                <div key={obs.id} style={{ padding: '8px 10px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px', marginBottom: '6px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+                                        <span style={{ fontSize: '10px', fontWeight: 600, color: '#6b7280' }}>
+                                            {format(new Date(obs.date), "dd 'de' MMMM, yyyy", { locale: es })}
+                                        </span>
+                                        {obs.teachers?.full_name && (
+                                            <span style={{ fontSize: '10px', color: '#9ca3af' }}>{obs.teachers.full_name}</span>
+                                        )}
                                     </div>
-                                ))}
-                            </div>
+                                    <p style={{ fontSize: '12px', color: '#374151', margin: 0 }}>{obs.content}</p>
+                                </div>
+                            ))}
                         </div>
                     )}
 
-                    {/* Observaciones del Modal (escrita al exportar) */}
+                    {/* ── Manual Observations (from export modal) ── */}
                     {observations && (
-                        <div className="mb-12">
-                            <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">Observaciones Pedagógicas Adicionales</h3>
-                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 whitespace-pre-wrap text-sm text-gray-700 leading-relaxed min-h-[60px]">
-                                {observations}
+                        <div style={{ marginBottom: '20px' }}>
+                            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#1f2937', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px', marginBottom: '10px' }}>Observaciones Pedagógicas Adicionales</h3>
+                            <div style={{ padding: '10px 14px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
+                                <p style={{ fontSize: '12px', lineHeight: '1.7', color: '#374151', margin: 0, whiteSpace: 'pre-wrap' }}>{observations}</p>
                             </div>
                         </div>
                     )}
 
-                    {/* Signatures */}
-                    <div className="mt-auto pt-16 grid grid-cols-2 gap-16">
-                        <div className="text-center">
-                            <div className="border-b border-gray-400 w-full mb-3"></div>
-                            <p className="text-sm text-gray-600 font-medium">Firma del Docente / Preceptor</p>
+                    {/* ── Spacer → Signatures ── */}
+                    <div style={{ flexGrow: 1, minHeight: '40px' }} />
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', paddingTop: '20px' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ borderBottom: '1px solid #9ca3af', marginBottom: '8px', height: '1px' }} />
+                            <p style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500, margin: 0 }}>Firma del Docente / Preceptor</p>
                         </div>
-                        <div className="text-center">
-                            <div className="border-b border-gray-400 w-full mb-3"></div>
-                            <p className="text-sm text-gray-600 font-medium">Firma del Padre / Tutor</p>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ borderBottom: '1px solid #9ca3af', marginBottom: '8px', height: '1px' }} />
+                            <p style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500, margin: 0 }}>Firma del Padre / Tutor</p>
                         </div>
                     </div>
 
