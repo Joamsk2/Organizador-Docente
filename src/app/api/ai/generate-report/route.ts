@@ -40,10 +40,10 @@ export async function POST(request: NextRequest) {
             .eq('student_id', student_id)
             .eq('course_id', course_id)
 
-        // Fetch attendance
+        // Fetch attendance (including daily notes)
         const { data: attendance } = await supabase
             .from('attendance')
-            .select('status, date')
+            .select('status, date, notes')
             .eq('student_id', student_id)
             .eq('course_id', course_id)
 
@@ -88,10 +88,17 @@ export async function POST(request: NextRequest) {
             return `- ${sub?.assignments?.title || 'Evaluación'}: Nota ${c.teacher_override_grade || c.suggested_grade}. ${c.correction_summary || ''}`
         }).join('\n') || 'Sin correcciones registradas.'
 
-        // Build pedagogical observations
         const observationsText = observations?.length
             ? observations.map(o => `- [${o.date}] ${o.teachers?.full_name || 'Docente'}: ${o.content}`).join('\n')
             : 'Sin observaciones registradas.'
+
+        // Build daily performance notes (from attendance)
+        const dailyNotesText = attendance?.filter(a => a.notes && a.notes.trim())?.length
+            ? attendance
+                .filter(a => a.notes && a.notes.trim())
+                .map(a => `- [${a.date}]: ${a.notes}`)
+                .join('\n')
+            : 'Sin notas de participación diaria.'
 
         // Build compact prompt (only ~150 tokens per student)
         const studentData = `
@@ -101,8 +108,11 @@ Asistencia: ${attendanceRate}%
 Cantidad de evaluaciones: ${gradeValues.length}
 Período: ${period || 'General'}
 
-Observaciones del docente:
+Observaciones del docente (Pedagógicas):
 ${observationsText}
+
+Registro de participación y desempeño diario (Clase a clase):
+${dailyNotesText}
 
 Historial de correcciones:
 ${correctionSummaries}
