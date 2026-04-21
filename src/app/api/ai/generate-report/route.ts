@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateObject } from 'ai'
-import { google } from '@ai-sdk/google'
+import { geminiFlashLite } from '@/lib/ai/gemini'
 import { studentReportSchema } from '@/lib/ai/schemas'
 import { REPORT_PROMPT } from '@/lib/ai/prompts'
 import { createClient } from '@/lib/supabase/server'
@@ -120,7 +120,7 @@ ${correctionSummaries}
 `.trim()
 
         const { object } = await generateObject({
-            model: google('gemini-2.0-flash-exp'),
+            model: geminiFlashLite,
             schema: studentReportSchema,
             system: REPORT_PROMPT,
             prompt: studentData,
@@ -182,10 +182,10 @@ ${correctionSummaries}
             },
         })
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Report generation error:', error)
         return NextResponse.json(
-            { error: 'Error al generar el informe' },
+            { error: 'Error al generar el informe', details: error.message || String(error) },
             { status: 500 }
         )
     }
