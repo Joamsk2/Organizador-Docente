@@ -156,36 +156,6 @@ export const StudentReportPrintable = React.forwardRef<HTMLDivElement, Props>(
                         )}
                     </div>
 
-                    {/* ── Persistent Observations (from DB) ── */}
-                    {persistentObservations.length > 0 && (
-                        <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#1f2937', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px', marginBottom: '10px' }}>Registro de Observaciones</h3>
-                            {persistentObservations.slice(0, 5).map((obs) => (
-                                <div key={obs.id} style={{ padding: '8px 10px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px', marginBottom: '6px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-                                        <span style={{ fontSize: '10px', fontWeight: 600, color: '#6b7280' }}>
-                                            {format(new Date(obs.date), "dd 'de' MMMM, yyyy", { locale: es })}
-                                        </span>
-                                        {obs.teachers?.full_name && (
-                                            <span style={{ fontSize: '10px', color: '#9ca3af' }}>{obs.teachers.full_name}</span>
-                                        )}
-                                    </div>
-                                    <p style={{ fontSize: '12px', color: '#374151', margin: 0 }}>{obs.content}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* ── Manual Observations (from export modal) ── */}
-                    {observations && (
-                        <div style={{ marginBottom: '20px' }}>
-                            <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#1f2937', borderBottom: '1px solid #e5e7eb', paddingBottom: '6px', marginBottom: '10px' }}>Observaciones Pedagógicas Adicionales</h3>
-                            <div style={{ padding: '10px 14px', backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
-                                <p style={{ fontSize: '12px', lineHeight: '1.7', color: '#374151', margin: 0, whiteSpace: 'pre-wrap' }}>{observations}</p>
-                            </div>
-                        </div>
-                    )}
-
                     {/* ── Spacer → Signatures ── */}
                     <div style={{ flexGrow: 1, minHeight: '40px' }} />
 
