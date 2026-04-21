@@ -1,8 +1,7 @@
 import { google } from '@ai-sdk/google'
 
-// Gemini 2.5 Flash-Lite Preview (User requested)
-// Note: Temporarily using 1.5-flash as the requested 2.5 model is throwing 500 errors in the current environment.
-export const geminiFlashLite = google('gemini-1.5-flash')
+// Gemini 2.0 Flash-Lite — Standard for the application
+export const geminiFlashLite = google('gemini-2.0-flash-lite')
 
 // Recommended for synthesis and planning tasks
-export const geminiFlash = google('gemini-1.5-flash')
+export const geminiFlash = google('gemini-2.0-flash-lite')
