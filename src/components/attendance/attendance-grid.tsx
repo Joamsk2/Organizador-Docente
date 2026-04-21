@@ -16,15 +16,21 @@ interface AttendanceGridProps {
     students: Student[]
     attendanceRecords: Attendance[]
     onSave: (studentId: string, status: AttendanceStatus, notes?: string) => Promise<boolean>
+    onDelete?: (studentId: string) => Promise<boolean>
     loading?: boolean
 }
 
-export function AttendanceGrid({ students, attendanceRecords, onSave, loading }: AttendanceGridProps) {
+export function AttendanceGrid({ students, attendanceRecords, onSave, onDelete, loading }: AttendanceGridProps) {
     const [savingId, setSavingId] = useState<string | null>(null)
 
-    const handleStatusChange = async (studentId: string, status: AttendanceStatus, notes?: string) => {
+    const handleStatusChange = async (studentId: string, status: AttendanceStatus, currentStatus?: AttendanceStatus, notes?: string) => {
         setSavingId(studentId)
-        await onSave(studentId, status, notes)
+        if (currentStatus === status && !notes && onDelete) {
+            // If clicking the same status and no new note, delete (toggle off)
+            await onDelete(studentId)
+        } else {
+            await onSave(studentId, status, notes)
+        }
         setSavingId(null)
     }
 
@@ -72,8 +78,8 @@ export function AttendanceGrid({ students, attendanceRecords, onSave, loading }:
                                                     <button
                                                         key={status}
                                                         disabled={isSaving || loading}
-                                                        onClick={() => handleStatusChange(student.id, status as AttendanceStatus)}
-                                                        title={config.label}
+                                                        onClick={() => handleStatusChange(student.id, status as AttendanceStatus, currentStatus)}
+                                                        title={isActive ? "Quitar marca" : config.label}
                                                         className={cn(
                                                             "relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200",
                                                             "border border-border hover:border-primary-400 group-hover:scale-105",
@@ -105,7 +111,7 @@ export function AttendanceGrid({ students, attendanceRecords, onSave, loading }:
                                                 title={record?.notes || "Agregar nota"}
                                                 onClick={() => {
                                                     const note = prompt("Notas de asistencia:", record?.notes || "")
-                                                    if (note !== null) handleStatusChange(student.id, (currentStatus || 'presente') as AttendanceStatus, note)
+                                                    if (note !== null) handleStatusChange(student.id, (currentStatus || 'presente') as AttendanceStatus, undefined, note)
                                                 }}
                                             >
                                                 <MessageSquare className="w-4 h-4" />

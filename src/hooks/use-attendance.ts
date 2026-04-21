@@ -83,27 +83,46 @@ export function useAttendance(courseId: string | null, date: string | null) {
         }
     }
 
-    // Bulk operation to mark everyone as present for example
-    const markAllAsPresent = async (studentIds: string[]) => {
+    const deleteAttendance = async (studentId: string) => {
         if (!courseId || !date) return false
 
-        setLoading(true)
+        const existing = attendance.find(a => a.student_id === studentId)
+        if (!existing) return true
+
         try {
-            // For simplicity in this demo/free tier, we do it in a way that respects existing records
-            // but a real app might use a stored procedure or multiple upserts
-            for (const studentId of studentIds) {
-                const hasAttendance = attendance.some(a => a.student_id === studentId)
-                if (!hasAttendance) {
-                    await saveAttendance(studentId, 'presente')
-                }
-            }
-            toast.success('Asistencia actualizada')
+            const { error } = await supabase
+                .from('attendance')
+                .delete()
+                .eq('id', existing.id)
+
+            if (error) throw error
+            setAttendance(prev => prev.filter(a => a.id !== existing.id))
             return true
-        } catch (error) {
-            toast.error('Error en operación masiva')
+        } catch (error: any) {
+            console.error('Error deleting attendance:', error)
+            toast.error('Error al eliminar asistencia')
             return false
-        } finally {
-            setLoading(false)
+        }
+    }
+
+    const deleteAllAttendance = async () => {
+        if (!courseId || !date) return false
+
+        try {
+            const { error } = await supabase
+                .from('attendance')
+                .delete()
+                .eq('course_id', courseId)
+                .eq('date', date)
+
+            if (error) throw error
+            setAttendance([])
+            toast.success('Registros eliminados')
+            return true
+        } catch (error: any) {
+            console.error('Error deleting all attendance:', error)
+            toast.error('Error al eliminar registros')
+            return false
         }
     }
 
@@ -112,6 +131,8 @@ export function useAttendance(courseId: string | null, date: string | null) {
         loading,
         fetchAttendance,
         saveAttendance,
+        deleteAttendance,
+        deleteAllAttendance,
         markAllAsPresent
     }
 }

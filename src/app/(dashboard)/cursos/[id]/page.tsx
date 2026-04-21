@@ -25,13 +25,16 @@ export default async function CourseOverviewPage({ params }: { params: Promise<{
             .from('attendance')
             .select('*', { count: 'exact' })
             .eq('course_id', id),
-        supabase
-            .from('assignments')
-            .select('*')
-            .eq('course_id', id)
-            .gte('due_date', new Date().toISOString())
-            .order('due_date', { ascending: true })
-            .limit(5),
+            supabase
+                .from('assignments')
+                .select('*')
+                .eq('course_id', id)
+                .gte('due_date', (() => {
+                    const d = new Date()
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+                })())
+                .order('due_date', { ascending: true })
+                .limit(5),
         supabase
             .from('grades')
             .select('*')

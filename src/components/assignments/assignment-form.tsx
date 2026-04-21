@@ -25,7 +25,7 @@ export function AssignmentForm({ isOpen, onClose, onSubmit, initialData, courseI
         title: initialData?.title || '',
         description: initialData?.description || '',
         type: (initialData?.type as AssignmentType) || 'tp',
-        due_date: initialData?.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : '',
+        due_date: initialData?.due_date ? initialData.due_date.split('T')[0] : '',
         // Just mock attachments for now, as real attachments need file upload logic to storage bucket
         attachment_urls: initialData?.attachment_urls || [],
     })

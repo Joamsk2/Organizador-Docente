@@ -14,7 +14,10 @@ export default function AsistenciaCoursePage({ params }: { params: Promise<{ id:
     // Default to local date in YYYY-MM-DD
     const [selectedDate, setSelectedDate] = useState<string>(() => {
         const d = new Date()
-        return d.toISOString().split('T')[0]
+        const year = d.getFullYear()
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
     })
 
     const { students, fetchStudents, loading: loadingStudents } = useStudents(courseId)
@@ -22,6 +25,8 @@ export default function AsistenciaCoursePage({ params }: { params: Promise<{ id:
         attendance,
         fetchAttendance,
         saveAttendance,
+        deleteAttendance,
+        deleteAllAttendance,
         markAllAsPresent,
         loading: loadingAttendance
     } = useAttendance(courseId, selectedDate)
@@ -42,6 +47,12 @@ export default function AsistenciaCoursePage({ params }: { params: Promise<{ id:
         if (window.confirm('¿Marcar a todos los alumnos como presentes?')) {
             await markAllAsPresent(students.map(s => s.id))
             fetchAttendance() // Refresh
+        }
+    }
+
+    const handleDeleteAll = async () => {
+        if (window.confirm('¿Eliminar TODOS los registros de asistencia para esta fecha? Esta acción no se puede deshacer.')) {
+            await deleteAllAttendance()
         }
     }
 
@@ -90,14 +101,23 @@ export default function AsistenciaCoursePage({ params }: { params: Promise<{ id:
                         </div>
                     </div>
 
-                    <button
-                        onClick={handleMarkAllPresent}
-                        disabled={students.length === 0}
-                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface border border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded-xl text-sm font-bold transition-all shadow-sm group"
-                    >
-                        <UserCheck className="w-4 h-4 transition-transform group-hover:scale-110" />
-                        Marcar todos como Presentes
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleDeleteAll}
+                            disabled={attendance.length === 0 || loadingAttendance}
+                            className="flex items-center gap-2 px-4 py-2 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all shadow-sm"
+                        >
+                            Eliminar Registros
+                        </button>
+                        <button
+                            onClick={handleMarkAllPresent}
+                            disabled={students.length === 0}
+                            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface border border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded-xl text-sm font-bold transition-all shadow-sm group"
+                        >
+                            <UserCheck className="w-4 h-4 transition-transform group-hover:scale-110" />
+                            Marcar todos como Presentes
+                        </button>
+                    </div>
                 </div>
             )}
 
@@ -119,6 +139,7 @@ export default function AsistenciaCoursePage({ params }: { params: Promise<{ id:
                             students={students}
                             attendanceRecords={attendance}
                             onSave={saveAttendance}
+                            onDelete={deleteAttendance}
                             loading={loadingAttendance}
                         />
                     </div>

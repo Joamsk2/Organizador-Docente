@@ -37,8 +37,17 @@ export function useObservations(studentId: string | null, courseId: string | nul
         }
     }, [studentId, courseId, supabase])
 
-    const addObservation = async (content: string, date: string = new Date().toISOString().split('T')[0]) => {
+    const addObservation = async (content: string, date?: string) => {
         if (!studentId || !courseId) return null
+
+        let useDate = date
+        if (!useDate) {
+            const d = new Date()
+            const year = d.getFullYear()
+            const month = String(d.getMonth() + 1).padStart(2, '0')
+            const day = String(d.getDate()).padStart(2, '0')
+            useDate = `${year}-${month}-${day}`
+        }
 
         try {
             const { data: { user } } = await supabase.auth.getUser()
@@ -51,7 +60,7 @@ export function useObservations(studentId: string | null, courseId: string | nul
                     course_id: courseId,
                     teacher_id: user.id,
                     content,
-                    date
+                    date: useDate
                 })
                 .select('*, teachers(full_name)')
                 .single()
