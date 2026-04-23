@@ -82,7 +82,7 @@ export function KanbanBoard({ assignments, onStatusChange, onEdit, onDelete, onC
         // If dropping over another card in a list (Sortable sorting)
         // We get the list it belongs to
         const overAssignment = assignments.find(a => a.id === overId)
-        if (overAssignment && overAssignment.status && overAssignment.status !== assignment.status) {
+        if (overAssignment && overAssignment.status != null && overAssignment.status !== assignment.status) {
             // Moved to another column over a card
             onStatusChange(activeId, overAssignment.status)
         }

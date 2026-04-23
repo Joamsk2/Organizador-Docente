@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateObject } from 'ai'
-import { geminiFlashLite } from '@/lib/ai/gemini'
+import { geminiFlash } from '@/lib/ai/gemini'
 import { studentReportSchema } from '@/lib/ai/schemas'
 import { REPORT_PROMPT } from '@/lib/ai/prompts'
 import { createClient } from '@/lib/supabase/server'
@@ -120,7 +120,7 @@ ${correctionSummaries}
 `.trim()
 
         const { object } = await generateObject({
-            model: geminiFlashLite,
+            model: geminiFlash,
             schema: studentReportSchema,
             system: REPORT_PROMPT,
             prompt: studentData,

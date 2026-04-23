@@ -98,7 +98,7 @@ export default function DashboardPage() {
             supabase.from('assignments').select('id', { count: 'exact', head: true }).eq('status', 'asignado'),
             supabase
                 .from('course_schedules')
-                .select(`id, start_time, end_time, classroom, courses (name, color, schools (name))`)
+                .select(`id, start_time, end_time, classroom, courses (id, name, color, schools (name))`)
                 .eq('day_of_week', today)
                 .order('start_time'),
             supabase
@@ -120,7 +120,7 @@ export default function DashboardPage() {
 
         if (schedulesRes.data) {
             setUpcomingClasses(schedulesRes.data.map((s: any) => ({
-                id: s.id,
+                id: s.courses?.id || s.id,
                 courseName: s.courses?.name || '',
                 schoolName: s.courses?.schools?.name || '',
                 startTime: s.start_time,
@@ -198,344 +198,283 @@ export default function DashboardPage() {
         return classDate > now
     }) || upcomingClasses[0]
 
-    const statCards = [
-        { label: 'Escuelas', value: stats.schools, icon: Building2, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20', href: '/escuelas' },
-        { label: 'Cursos', value: stats.courses, icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', href: '/escuelas' },
-        { label: 'Alumnos', value: stats.students, icon: Users, color: 'text-violet-500', bg: 'bg-violet-500/10', border: 'border-violet-500/20', href: getSmartHref('alumnos') },
-        { label: 'Pendientes', value: stats.pendingAssignments, icon: ClipboardList, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20', href: getSmartHref('trabajos') },
-    ]
-
     return (
-        <div className="relative space-y-8 max-w-7xl mx-auto pb-12">
+        <div className="relative space-y-6 max-w-7xl mx-auto pb-12 px-4 md:px-0">
             {/* Background Decorative Element */}
             <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-primary-500/5 blur-[120px] rounded-full pointer-events-none -z-10" />
-            <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] bg-violet-500/5 blur-[100px] rounded-full pointer-events-none -z-10" />
 
-            {/* Premium Hero Section */}
+            {/* Efficiency Hero Section - Compact & Powerful */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-sidebar via-sidebar to-primary-900 p-8 md:p-12 text-white shadow-2xl shadow-primary-900/20"
+                className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#0b1326] via-[#131b2e] to-primary-950 p-6 md:p-8 text-white shadow-2xl"
             >
-                {/* Decorative Pattern */}
-                <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
-                    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <defs>
-                            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#grid)" />
-                    </svg>
-                </div>
-
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-                    <div className="space-y-4 max-w-2xl">
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-primary-200 text-sm font-bold"
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            <span>Panel Inteligente</span>
-                        </motion.div>
-
-                        <div className="space-y-2">
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
-                                ¡{greeting}{userName ? `, ${userName}` : ''}!
-                            </h1>
-                            <p className="text-primary-100/80 text-lg md:text-xl font-medium max-w-xl">
-                                {nextClass
-                                    ? `Hoy das clase en `
-                                    : todayStr}
-                                {nextClass && (
-                                    <span className="text-white font-bold underline decoration-primary-400 decoration-4 underline-offset-4">
-                                        {nextClass.courseName}
-                                    </span>
-                                )}
-                                {stats.pendingAssignments > 0 && (
-                                    <>
-                                        {nextClass ? ' y tenés ' : ' Tenés '}
-                                        <span className="text-primary-300 font-bold">{stats.pendingAssignments}</span> entregas por corregir.
-                                    </>
-                                )}
-                            </p>
+                {/* Subtle Grid Overlay */}
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+                
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-primary-400 font-bold text-xs uppercase tracking-widest mb-1">
+                            <Sparkles className="w-3 h-3" />
+                            <span>Hoy es {todayStr}</span>
                         </div>
-
-                        <div className="flex flex-wrap gap-4 pt-4">
+                        <h1 className="text-3xl md:text-4xl font-black tracking-tight">
+                            ¡{greeting}{userName ? `, ${userName}` : ''}!
+                        </h1>
+                        <p className="text-primary-100/70 text-base md:text-lg font-medium max-w-2xl">
+                            {nextClass
+                                ? `Tu próxima clase es `
+                                : 'No tienes más clases hoy.'}
                             {nextClass && (
-                                <Link
-                                    href={`/cursos/${nextClass.id}`}
-                                    className="flex items-center gap-2 rounded-2xl bg-white text-primary-900 font-black px-6 py-3.5 hover:bg-primary-50 transition-all shadow-xl shadow-white/10 group"
-                                >
-                                    Ir al curso actual
-                                    <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                                </Link>
+                                <span className="text-primary-400 font-bold">
+                                    {nextClass.courseName}
+                                </span>
                             )}
-                            <Link 
-                                href="/agenda"
-                                className="flex items-center gap-2 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 px-6 py-3.5 font-bold hover:bg-white/20 transition-all text-white"
-                            >
-                                <Calendar className="w-5 h-5" />
-                                Ver mi agenda
-                            </Link>
-                        </div>
+                            {stats.pendingAssignments > 0 && (
+                                <span> • <span className="text-white font-bold">{stats.pendingAssignments}</span> entregas pendientes</span>
+                            )}
+                        </p>
                     </div>
 
-                    <div className="hidden lg:block relative group">
-                        <div className="absolute inset-0 bg-primary-500/20 blur-[60px] rounded-full group-hover:bg-primary-500/30 transition-all" />
-                        <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 w-64 text-center space-y-4 shadow-inner">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary-400 to-violet-400 p-0.5 mx-auto">
-                                <div className="w-full h-full rounded-[0.9rem] bg-sidebar flex items-center justify-center">
-                                    <GraduationCap className="w-8 h-8 text-white" />
-                                </div>
+                    <div className="flex shrink-0 gap-3">
+                         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex items-center gap-4">
+                            <div className="text-right">
+                                <p className="text-[10px] text-primary-300 font-bold uppercase tracking-tighter">Asistencia Hoy</p>
+                                <p className="text-2xl font-black">94%</p>
                             </div>
-                            <div>
-                                <p className="text-primary-200 text-sm font-bold uppercase tracking-widest">Rendimiento</p>
-                                <p className="text-4xl font-black mt-1">94%</p>
+                            <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center">
+                                <GraduationCap className="w-6 h-6 text-primary-400" />
                             </div>
-                            <div className="pt-4 border-t border-white/10">
-                                <p className="text-xs text-primary-300 font-medium">Promedio de asistencia de hoy</p>
-                            </div>
-                        </div>
+                         </div>
                     </div>
                 </div>
             </motion.div>
 
-            {/* Stats Section with Glass Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                {statCards.map((card, idx) => {
-                    const Icon = card.icon
-                    return (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 * (idx + 3) }}
-                            key={card.label}
-                        >
-                            <Link
-                                href={card.href}
-                                className="group relative block bg-surface rounded-[2rem] border border-border p-6 transition-all hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-2 overflow-hidden"
-                            >
-                                <div className={cn('absolute top-0 right-0 w-24 h-24 blur-[40px] rounded-full opacity-20 -mr-12 -mt-12 transition-all group-hover:opacity-40', card.bg)} />
+            {/* QUICK ACTIONS GRID - The "Command Center" */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => { if(nextClass) window.location.href = `/cursos/${nextClass.id}/asistencia` }}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#10b981] text-white shadow-lg shadow-emerald-500/20 group transition-all"
+                >
+                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                        <Users className="w-6 h-6" />
+                    </div>
+                    <span className="font-black text-sm uppercase tracking-tight">Tomar Asistencia</span>
+                </motion.button>
 
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-lg', card.bg, card.color)}>
-                                        <Icon className="w-6 h-6" />
-                                    </div>
-                                    <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-text-muted group-hover:bg-primary-500 group-hover:border-primary-500 group-hover:text-white transition-all">
-                                        <ChevronRight className="w-4 h-4" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <p className="text-3xl lg:text-4xl font-black text-text-primary tracking-tight">
-                                        {loading ? <span className="inline-block w-8 h-8 bg-surface-secondary rounded animate-pulse" /> : card.value}
-                                    </p>
-                                    <p className="text-sm font-bold text-text-secondary mt-1 uppercase tracking-wider">{card.label}</p>
-                                </div>
-                            </Link>
-                        </motion.div>
-                    )
-                })}
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => window.location.href = getSmartHref('trabajos')}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-surface border border-border hover:border-primary-500/50 group transition-all"
+                >
+                    <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center mb-2 group-hover:bg-primary-500/20 transition-colors">
+                        <ClipboardList className="w-6 h-6 text-primary-500" />
+                    </div>
+                    <span className="font-bold text-sm text-text-primary uppercase tracking-tight">Cargar Notas</span>
+                </motion.button>
+
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-surface border border-border hover:border-amber-500/50 group transition-all"
+                >
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center mb-2 group-hover:bg-amber-500/20 transition-colors">
+                        <Sparkles className="w-6 h-6 text-amber-500" />
+                    </div>
+                    <span className="font-bold text-sm text-text-primary uppercase tracking-tight">Módulo IA</span>
+                </motion.button>
+
+                <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => window.location.href = '/agenda'}
+                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-surface border border-border hover:border-violet-500/50 group transition-all"
+                >
+                    <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center mb-2 group-hover:bg-violet-500/20 transition-colors">
+                        <Calendar className="w-6 h-6 text-violet-500" />
+                    </div>
+                    <span className="font-bold text-sm text-text-primary uppercase tracking-tight">Planificar</span>
+                </motion.button>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8 items-start">
-                {/* Main Agenda Section */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.7 }}
-                    className="lg:col-span-2 bg-surface rounded-[2.5rem] border border-border shadow-sm p-8"
-                >
-                    <div className="flex items-center justify-between mb-8 pb-6 border-b border-border">
-                        <div className="space-y-1">
-                            <h2 className="text-2xl font-black text-text-primary flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-950/30 flex items-center justify-center">
-                                    <Clock className="w-6 h-6 text-primary-500" />
-                                </div>
-                                Mi Jornada Hoy
-                            </h2>
-                            <p className="text-text-secondary font-medium pl-13">Horarios de clase asignados</p>
-                        </div>
-                        <Link 
-                            href="/agenda"
-                            className="text-sm font-bold text-primary-600 hover:text-primary-700 underline underline-offset-4"
-                        >
-                            Ver calendario completo
-                        </Link>
-                    </div>
-
-                    {loading ? (
-                        <div className="space-y-6">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-24 bg-surface-secondary rounded-[2rem] animate-pulse" />
-                            ))}
-                        </div>
-                    ) : upcomingClasses.length === 0 ? (
-                        <div className="text-center py-16 px-8 rounded-[2rem] bg-surface-secondary/50 border-2 border-dashed border-border/80">
-                            <div className="w-20 h-20 mx-auto mb-6 bg-white dark:bg-surface rounded-3xl flex items-center justify-center shadow-sm">
-                                <Clock className="w-10 h-10 text-primary-300" />
-                            </div>
-                            <h3 className="font-black text-2xl text-text-primary">Día libre de clases</h3>
-                            <p className="text-text-secondary mt-2 max-w-sm mx-auto font-medium">No tienes horarios registrados para el día de hoy. ¡Aprovechá para planificar!</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-6">
-                            {upcomingClasses.map((cls, idx) => (
-                                <Link
-                                    href={`/cursos/${cls.id}`}
-                                    key={cls.id}
-                                    className="group relative flex items-center gap-6 p-6 rounded-[2rem] bg-surface-secondary/50 hover:bg-surface border border-transparent hover:border-border hover:shadow-xl transition-all"
-                                >
-                                    <div className="flex flex-col items-center justify-center min-w-[80px] space-y-1">
-                                        <p className="font-black text-2xl text-text-primary tracking-tighter">
-                                            {formatTime(cls.startTime)}
-                                        </p>
-                                        <div className="w-8 h-1 rounded-full bg-primary-200" style={{ backgroundColor: `${cls.color}40` }} />
-                                    </div>
-
-                                    <div className="flex-1 space-y-1">
-                                        <p className="font-black text-xl text-text-primary group-hover:text-primary-600 transition-colors">{cls.courseName}</p>
-                                        <div className="flex items-center gap-3 text-sm text-text-secondary font-medium">
-                                            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface border border-border">
-                                                <Building2 className="w-3.5 h-3.5 opacity-70" /> {cls.schoolName}
-                                            </span>
-                                            {cls.classroom && (
-                                                <span className="opacity-50 text-xs">Aula {cls.classroom}</span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-surface border border-border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className="text-xs font-bold text-text-primary">Asistencia</span>
-                                        <ChevronRight className="w-4 h-4 text-primary-500" />
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </motion.div>
-
-                {/* Right Sidebar Widget */}
-                <div className="space-y-8">
-                    {/* Alumnos en Riesgo Widget */}
+            <div className="grid lg:grid-cols-3 gap-6 items-start">
+                {/* Left Side: Timeline & Classes */}
+                <div className="lg:col-span-2 space-y-6">
                     <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.8 }}
-                        className="bg-rose-50/50 dark:bg-rose-950/5 rounded-[2.5rem] border border-rose-100 dark:border-rose-900/20 p-8 shadow-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="bg-surface rounded-[2rem] border border-border p-6"
                     >
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-black text-xl text-rose-800 dark:text-rose-400 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
-                                    <AlertTriangle className="w-6 h-6" />
+                            <h2 className="text-xl font-black text-text-primary flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center">
+                                    <Clock className="w-5 h-5 text-primary-500" />
                                 </div>
-                                Alertas IA
-                            </h3>
-                            <button className="w-8 h-8 rounded-full hover:bg-rose-100 dark:hover:bg-rose-900/30 flex items-center justify-center transition-colors">
-                                <ChevronRight className="w-4 h-4 text-rose-400" />
-                            </button>
+                                Cronograma de Hoy
+                            </h2>
+                            <Link href="/agenda" className="text-xs font-bold text-primary-600 uppercase tracking-widest hover:underline">Ver todo</Link>
                         </div>
 
                         {loading ? (
                             <div className="space-y-4">
-                                {[1, 2].map((i) => <div key={i} className="h-20 bg-rose-100/30 rounded-2xl animate-pulse" />)}
+                                {[1, 2, 3].map(i => <div key={i} className="h-20 bg-surface-secondary animate-pulse rounded-2xl" />)}
                             </div>
-                        ) : riskStudents.length === 0 ? (
-                            <div className="text-center py-10 space-y-3">
-                                <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 flex items-center justify-center">
-                                    <CheckCircle2 className="w-8 h-8 text-emerald-600" />
-                                </div>
-                                <p className="text-sm font-bold text-rose-900/40 dark:text-rose-400/40">Sin alertas pendientes</p>
+                        ) : upcomingClasses.length === 0 ? (
+                            <div className="text-center py-12 bg-surface-secondary/30 rounded-2xl border-2 border-dashed border-border/50">
+                                <p className="text-text-muted font-bold">No hay clases programadas para hoy.</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                <AnimatePresence>
-                                    {riskStudents.map((student) => (
-                                        <motion.div
-                                            layout
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.9, x: 20 }}
-                                            key={student.id}
-                                            className="bg-white dark:bg-surface p-4 rounded-2xl border border-rose-100 dark:border-rose-900/50 shadow-sm transition-all hover:shadow-md"
-                                        >
-                                            <div className="flex items-start justify-between gap-3">
-                                                <Link href={`/cursos/${student.courseId}/alumnos/${student.id}`} className="min-w-0 flex-1 group">
-                                                    <p className="font-black text-text-primary truncate group-hover:text-primary-600 transition-colors uppercase text-sm tracking-tight">{student.last_name}, {student.first_name}</p>
-                                                    <p className="text-xs text-text-secondary font-bold truncate mt-0.5">{student.courseName}</p>
-                                                    <div className="flex flex-wrap gap-1.5 mt-3">
-                                                        {student.reasons.map((r, i) => (
-                                                            <span key={i} className="text-[10px] bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 px-2 py-1 rounded-lg font-black border border-rose-100/50 dark:border-transparent">
-                                                                {r}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </Link>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        handleDismissRisk(student.id);
-                                                    }}
-                                                    className="p-2 text-text-muted hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-xl transition-all"
-                                                >
-                                                    <EyeOff className="w-4 h-4" />
-                                                </button>
+                            <div className="relative pl-8 space-y-6">
+                                {/* Vertical Timeline Line */}
+                                <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-gradient-to-b from-primary-500/50 via-border to-transparent" />
+                                
+                                {upcomingClasses.map((cls, idx) => (
+                                    <div key={idx} className="relative group">
+                                        {/* Timeline Dot */}
+                                        <div className={cn(
+                                            "absolute -left-5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-surface transition-transform group-hover:scale-150",
+                                            idx === 0 ? "bg-primary-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-border"
+                                        )} />
+                                        
+                                        <div className="flex items-center gap-4 p-4 rounded-2xl bg-surface-secondary/40 border border-transparent hover:border-border hover:bg-surface hover:shadow-xl transition-all">
+                                            <div className="min-w-[70px]">
+                                                <p className="text-sm font-black text-text-primary">{formatTime(cls.startTime)}</p>
+                                                <p className="text-[10px] text-text-muted font-bold uppercase">{formatTime(cls.endTime)}</p>
                                             </div>
-                                        </motion.div>
-                                    ))}
-                                </AnimatePresence>
+                                            
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-black text-text-primary truncate">{cls.courseName}</p>
+                                                <p className="text-xs text-text-secondary truncate">{cls.schoolName}</p>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                {cls.classroom && (
+                                                    <span className="hidden md:inline-block px-2 py-1 rounded-md bg-surface border border-border text-[10px] font-bold text-text-muted">Aula {cls.classroom}</span>
+                                                )}
+                                                <Link 
+                                                    href={`/cursos/${cls.id}/asistencia`}
+                                                    className="w-8 h-8 rounded-lg bg-white dark:bg-surface border border-border flex items-center justify-center text-primary-500 hover:bg-primary-500 hover:text-white transition-all shadow-sm"
+                                                >
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </motion.div>
 
-                    {/* Pending Reports / Global TPs */}
+                    {/* Stats Summary - Compacted */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[
+                            { label: 'Escuelas', value: stats.schools, icon: Building2, color: 'text-blue-500' },
+                            { label: 'Cursos', value: stats.courses, icon: BookOpen, color: 'text-emerald-500' },
+                            { label: 'Alumnos', value: stats.students, icon: Users, color: 'text-violet-500' },
+                            { label: 'TPs', value: stats.pendingAssignments, icon: FileText, color: 'text-amber-500' },
+                        ].map((s, i) => (
+                            <div key={i} className="bg-surface rounded-2xl border border-border p-4 flex items-center gap-3">
+                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center bg-current/10", s.color)}>
+                                    <s.icon className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <p className="text-lg font-black text-text-primary">{s.value}</p>
+                                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-tighter">{s.label}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right Side: High-Priority Alerts */}
+                <div className="space-y-6">
+                    {/* RISK ALERT CARD */}
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.9 }}
-                        className="bg-surface rounded-[2.5rem] border border-border p-8 shadow-sm"
+                        className="bg-rose-50/50 dark:bg-rose-950/5 rounded-[2rem] border border-rose-100 dark:border-rose-900/20 p-6"
                     >
-                        <h3 className="font-black text-xl text-text-primary flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                                <FileText className="w-6 h-6 text-amber-500" />
-                            </div>
-                            Para corregir
-                        </h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-black text-rose-800 dark:text-rose-400 flex items-center gap-2">
+                                <AlertTriangle className="w-5 h-5" />
+                                Alumnos en Riesgo
+                            </h3>
+                            <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black">{riskStudents.length}</span>
+                        </div>
 
-                        {loading ? (
-                            <div className="space-y-4">
-                                {[1, 2].map((i) => <div key={i} className="h-16 bg-surface-secondary rounded-2xl animate-pulse" />)}
-                            </div>
-                        ) : pendingTPs.length === 0 ? (
-                            <div className="text-center py-8">
-                                <p className="text-sm font-bold text-text-secondary italic">Todo al día ✨</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {pendingTPs.map(tp => (
-                                    <Link key={tp.id} href={`/cursos/${tp.courseId}/trabajos`} className="block group p-4 rounded-2xl bg-surface-secondary/50 hover:bg-primary-50 dark:hover:bg-primary-950/10 border border-transparent hover:border-primary-100 transition-all">
-                                        <div className="flex items-center justify-between gap-3">
+                        <div className="space-y-3">
+                            {riskStudents.length === 0 ? (
+                                <p className="text-xs text-rose-900/40 font-bold text-center py-4">Sin alertas críticas hoy.</p>
+                            ) : (
+                                riskStudents.map((student) => (
+                                    <div key={student.id} className="bg-white dark:bg-surface p-3 rounded-xl border border-rose-100 dark:border-rose-900/30 shadow-sm">
+                                        <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0">
-                                                <p className="text-sm font-black text-text-primary truncate uppercase tracking-tighter">{tp.title}</p>
-                                                <p className="text-xs text-text-secondary font-bold truncate mt-0.5">{tp.courseName}</p>
+                                                <p className="font-black text-text-primary text-xs truncate uppercase tracking-tight">{student.last_name}, {student.first_name}</p>
+                                                <p className="text-[10px] text-text-secondary font-bold truncate">{student.courseName}</p>
+                                                <div className="mt-2 flex flex-wrap gap-1">
+                                                    {student.reasons.map((r, i) => (
+                                                        <span key={i} className="text-[9px] bg-rose-50 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded-md font-bold">
+                                                            {r}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col items-center justify-center min-w-[44px] h-11 rounded-xl bg-white dark:bg-surface border border-border shadow-sm group-hover:border-primary-200 group-hover:bg-primary-50 transition-all">
-                                                <span className="text-sm font-black text-primary-600">{tp.submissionCount}</span>
-                                            </div>
+                                            <button 
+                                                onClick={() => handleDismissRisk(student.id)}
+                                                className="p-1.5 text-text-muted hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                            >
+                                                <EyeOff className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </motion.div>
+
+                    {/* CORRECTION ALERT CARD */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="bg-surface rounded-[2rem] border border-border p-6"
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-black text-text-primary flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-amber-500" />
+                                Por Corregir
+                            </h3>
+                            <Link href={getSmartHref('trabajos')} className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Ver todos</Link>
+                        </div>
+
+                        <div className="space-y-3">
+                            {pendingTPs.length === 0 ? (
+                                <p className="text-xs text-text-muted italic text-center py-4">Todo corregido ✨</p>
+                            ) : (
+                                pendingTPs.map(tp => (
+                                    <Link key={tp.id} href={`/cursos/${tp.courseId}/trabajos`} className="flex items-center justify-between p-3 rounded-xl bg-surface-secondary/50 hover:bg-primary-50 dark:hover:bg-primary-950/10 border border-transparent hover:border-primary-100 transition-all group">
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-black text-text-primary truncate uppercase tracking-tighter">{tp.title}</p>
+                                            <p className="text-[10px] text-text-secondary font-bold">{tp.courseName}</p>
+                                        </div>
+                                        <div className="w-8 h-8 rounded-lg bg-white dark:bg-surface border border-border flex items-center justify-center group-hover:border-primary-200 transition-colors">
+                                            <span className="text-xs font-black text-primary-600">{tp.submissionCount}</span>
                                         </div>
                                     </Link>
-                                ))}
-                                <button className="w-full mt-2 py-3.5 rounded-2xl border-2 border-dashed border-border text-text-muted text-sm font-black hover:border-primary-300 hover:text-primary-600 transition-all">
-                                    Corregir todo hoy
-                                </button>
-                            </div>
-                        )}
+                                ))
+                            )}
+                            <button className="w-full mt-2 py-2 rounded-xl border-2 border-dashed border-border text-[10px] font-black text-text-muted hover:border-primary-300 hover:text-primary-600 transition-all uppercase tracking-widest">
+                                Corregir Hoy
+                            </button>
+                        </div>
                     </motion.div>
                 </div>
             </div>
         </div>
     )
 }
+

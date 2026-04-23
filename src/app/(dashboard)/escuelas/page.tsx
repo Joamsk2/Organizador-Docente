@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Building2, Plus, Loader2 } from 'lucide-react'
+import { Building2, Plus, Loader2, Sparkles } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useSchools } from '@/hooks/use-schools'
 import { useCourses } from '@/hooks/use-courses'
 import { SchoolForm } from '@/components/schools/school-form'
@@ -51,48 +52,66 @@ export default function EscuelasPage() {
     const isLoading = loadingSchools || loadingCourses
 
     return (
-        <div className="space-y-6 animate-fade-in max-w-5xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-text-primary">Mis Escuelas</h1>
-                    <p className="text-text-secondary mt-1">Gestioná tus instituciones, niveles y turnos</p>
+        <div className="space-y-8 max-w-7xl mx-auto pb-12 px-4 md:px-0">
+            {/* Header / Command Bar */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 text-primary-400 text-[10px] font-black uppercase tracking-wider">
+                        <Sparkles className="w-3 h-3" />
+                        Infraestructura Educativa
+                    </div>
+                    <h1 className="text-5xl font-black text-text-primary tracking-tight">
+                        Mis Escuelas
+                    </h1>
                 </div>
+
                 <button
                     onClick={handleCreateSchool}
-                    className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-primary-600/25"
+                    className="group relative flex items-center justify-center gap-3 px-8 py-4 bg-primary-600 text-white rounded-2xl font-black transition-all hover:bg-primary-700 shadow-2xl shadow-primary-600/30 overflow-hidden"
                 >
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:animate-shimmer" />
                     <Plus className="w-5 h-5" />
                     Nueva Escuela
                 </button>
             </div>
 
             {isLoading ? (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="h-64 bg-surface-secondary/50 rounded-[2.5rem] border border-white/5 animate-pulse" />
+                    ))}
                 </div>
             ) : schools.length === 0 ? (
-                <div className="bg-surface rounded-xl border border-border p-12 text-center shadow-sm">
-                    <div className="w-20 h-20 bg-primary-50 dark:bg-primary-950/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Building2 className="w-10 h-10 text-primary-400" />
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-32 bg-surface-secondary/20 rounded-[4rem] border border-white/5 border-dashed"
+                >
+                    <div className="w-24 h-24 bg-primary-500/10 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                        <Building2 className="w-10 h-10 text-primary-500" />
                     </div>
-                    <h3 className="text-xl font-bold text-text-primary mb-2">No tenés escuelas registradas</h3>
-                    <p className="text-text-secondary max-w-md mx-auto mb-8">
-                        Para empezar a organizar tus clases y alumnos, primero necesitas agregar las instituciones académicas donde trabajas.
+                    <h3 className="text-3xl font-black text-text-primary tracking-tight">Configura tus Instituciones</h3>
+                    <p className="text-text-secondary mt-3 max-w-md mx-auto font-medium">
+                        Agrega las escuelas donde trabajas para comenzar a organizar tus cursos y alumnos.
                     </p>
                     <button
                         onClick={handleCreateSchool}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-white dark:bg-surface-secondary text-primary-700 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/50 rounded-xl font-medium transition-all shadow-sm border border-primary-200 dark:border-primary-800 hover:border-primary-300 dark:hover:border-primary-700"
+                        className="inline-flex items-center gap-3 mt-10 px-10 py-5 rounded-2xl bg-primary-600 text-white font-black hover:bg-primary-700 transition-all shadow-2xl shadow-primary-600/40"
                     >
                         <Plus className="w-5 h-5" />
                         Agregar mi primera escuela
                     </button>
-                </div>
+                </motion.div>
             ) : (
-                <div className="space-y-6">
-                    <div className="space-y-4">
-                        {schools.map(school => (
+                <div className="grid grid-cols-1 gap-8">
+                    {schools.map((school, idx) => (
+                        <motion.div
+                            key={school.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                        >
                             <SchoolAccordion
-                                key={school.id}
                                 school={school}
                                 courses={courses.filter(c => c.school_id === school.id)}
                                 onEditSchool={handleEditSchool}
@@ -101,8 +120,8 @@ export default function EscuelasPage() {
                                 onEditCourse={handleEditCourse}
                                 onDeleteCourse={deleteCourse}
                             />
-                        ))}
-                    </div>
+                        </motion.div>
+                    ))}
                 </div>
             )}
 

@@ -117,7 +117,7 @@ export function AssignmentCard({ assignment, onEdit, onDelete, onConfigureAI, on
                 <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1 text-[10px] font-medium text-text-secondary uppercase px-1.5 py-0.5 bg-surface-secondary rounded">
                         <FileText className="w-3 h-3" />
-                        {assignment.type ? assignment.type.replace('_', ' ') : 'Trabajo'}
+                        {assignment.type?.replace('_', ' ') ?? 'Trabajo'}
                     </span>
                     {assignment.attachment_urls && assignment.attachment_urls.length > 0 && (
                         <span className="text-[10px] text-text-muted">

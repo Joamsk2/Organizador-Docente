@@ -73,87 +73,89 @@ export default function ConfiguracionPage() {
     const currentTheme = theme === 'system' ? systemTheme : theme
 
     return (
-        <div className="space-y-8 animate-fade-in max-w-4xl mx-auto pt-4 pb-12">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl lg:text-3xl font-bold text-text-primary">Configuración</h1>
-                    <p className="text-text-secondary mt-1">Administrá tu perfil y personalizá tu experiencia</p>
-                </div>
+        <div className="space-y-12 animate-fade-in max-w-6xl mx-auto pt-8 pb-20 px-4">
+            <div className="flex flex-col gap-2 mb-8">
+                <h1 className="text-4xl font-black text-text-primary tracking-tighter">Centro de Control</h1>
+                <p className="text-text-muted font-bold tracking-tight uppercase text-xs opacity-60">Personalización & Perfil Profesional</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
                 
-                {/* Panel lateral: Navegación de Config - Opcional para expandir en el futuro */}
-                <div className="hidden md:block col-span-1 border-r border-border pr-6 space-y-1">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400 font-medium transition-colors">
-                        <User className="w-5 h-5 flex-shrink-0" />
-                        <span>Perfil</span>
-                    </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-surface-hover hover:text-text-primary font-medium transition-colors">
-                        <Palette className="w-5 h-5 flex-shrink-0" />
-                        <span>Apariencia</span>
-                    </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:bg-surface-hover hover:text-text-primary font-medium transition-colors">
-                        <Settings2 className="w-5 h-5 flex-shrink-0" />
-                        <span>Preferencias</span>
-                    </button>
+                {/* Panel lateral: Navegación de Config */}
+                <div className="hidden lg:block lg:col-span-3 space-y-4">
+                    <div className="sticky top-8 space-y-2">
+                        <button className="w-full flex items-center justify-between px-6 py-4 rounded-[1.5rem] bg-primary-600/10 text-primary-400 font-black text-sm transition-all border border-primary-500/20 group">
+                            <div className="flex items-center gap-3">
+                                <User className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" />
+                                <span>Perfil</span>
+                            </div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
+                        </button>
+                        <button className="w-full flex items-center gap-3 px-6 py-4 rounded-[1.5rem] text-text-muted hover:text-text-primary hover:bg-white/5 font-black text-sm transition-all group">
+                            <Palette className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                            <span>Apariencia</span>
+                        </button>
+                        <button className="w-full flex items-center gap-3 px-6 py-4 rounded-[1.5rem] text-text-muted hover:text-text-primary hover:bg-white/5 font-black text-sm transition-all group">
+                            <Settings2 className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                            <span>Preferencias</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Contenido Principal */}
-                <div className="col-span-1 md:col-span-2 space-y-8">
+                <div className="lg:col-span-9 space-y-12">
                     
                     {/* -- SECCIÓN PERFIL -- */}
-                    <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
-                        <div className="px-6 py-5 border-b border-border flex items-center gap-3">
-                            <User className="w-5 h-5 text-primary-500" />
-                            <h2 className="text-lg font-semibold text-text-primary">Perfil de Usuario</h2>
-                        </div>
-                        <div className="p-6 space-y-6">
-                            
-                            <div className="flex items-center gap-6">
-                                <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-surface shadow-sm">
-                                    <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                    <div className="bg-surface-secondary/30 rounded-[3rem] border border-white/5 shadow-2xl backdrop-blur-xl overflow-hidden">
+                        <div className="h-32 bg-gradient-to-r from-primary-900/40 via-surface-secondary to-primary-900/40 opacity-50" />
+                        
+                        <div className="px-10 pb-10 -mt-12 relative">
+                            <div className="flex flex-col md:flex-row items-end gap-8 mb-12">
+                                <div className="w-32 h-32 bg-surface-secondary rounded-[2.5rem] flex items-center justify-center border-4 border-surface shadow-2xl overflow-hidden group">
+                                    <span className="text-4xl font-black text-primary-500 group-hover:scale-110 transition-transform duration-500">
                                         {getInitials(teacher?.full_name || 'Docente')}
                                     </span>
                                 </div>
-                                <div className="space-y-1">
-                                    <h3 className="font-medium text-text-primary">{teacher?.full_name}</h3>
-                                    <p className="text-sm text-text-muted">{teacher?.email}</p>
+                                <div className="space-y-1 pb-2">
+                                    <h3 className="text-3xl font-black text-text-primary tracking-tight">{teacher?.full_name}</h3>
+                                    <p className="text-text-muted font-bold opacity-60 flex items-center gap-2">
+                                        <Monitor className="w-4 h-4" />
+                                        Membresía Profesional
+                                    </p>
                                 </div>
                             </div>
 
-                            <form onSubmit={handleSaveName} className="space-y-4 pt-4 border-t border-border">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-text-primary">Nombre Completo</label>
+                            <form onSubmit={handleSaveName} className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-white/5">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest px-1">Nombre Completo</label>
                                     <input
                                         type="text"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-surface-secondary text-text-primary border border-border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        className="w-full px-6 py-4 bg-white/5 text-text-primary border border-white/5 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:bg-white/10 transition-all font-bold outline-none"
                                         placeholder="Tu nombre y apellido"
                                         required
                                     />
                                 </div>
                                 
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-text-primary">Correo Electrónico</label>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest px-1">Email Profesional</label>
                                     <input
                                         type="email"
                                         value={teacher?.email || ''}
                                         disabled
-                                        className="w-full px-4 py-2.5 bg-surface-hover text-text-secondary border border-border/50 rounded-xl cursor-not-allowed opacity-70"
+                                        className="w-full px-6 py-4 bg-white/5 text-text-muted border border-white/5 rounded-2xl cursor-not-allowed opacity-50 font-bold"
                                     />
-                                    <p className="text-xs text-text-muted">El correo está vinculado a tu cuenta de acceso y no puede modificarse aquí.</p>
                                 </div>
 
-                                <div className="pt-2 flex justify-end">
+                                <div className="md:col-span-2 flex justify-end mt-4">
                                     <button
                                         type="submit"
                                         disabled={isSavingName || name === teacher?.full_name || !name.trim()}
-                                        className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="flex items-center gap-3 px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white rounded-2xl font-black text-sm transition-all shadow-lg shadow-primary-600/20 disabled:opacity-50 active:scale-95"
                                     >
                                         {isSavingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                        <span>Guardar Cambios</span>
+                                        <span>Actualizar Perfil</span>
                                     </button>
                                 </div>
                             </form>
@@ -162,82 +164,77 @@ export default function ConfiguracionPage() {
 
 
                     {/* -- SECCIÓN APARIENCIA -- */}
-                    <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
-                        <div className="px-6 py-5 border-b border-border flex items-center gap-3">
-                            <Palette className="w-5 h-5 text-indigo-500" />
-                            <h2 className="text-lg font-semibold text-text-primary">Apariencia visual</h2>
-                        </div>
-                        <div className="p-6">
-                            <p className="text-sm text-text-secondary mb-5">
-                                Elegí el tema que prefieras para la interfaz de la aplicación.
-                            </p>
-                            
-                            <div className="grid grid-cols-3 gap-4">
-                                {/* Theme Option: Light */}
-                                <button
-                                    onClick={() => setTheme('light')}
-                                    className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                                        theme === 'light' 
-                                            ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10' 
-                                            : 'border-border bg-surface hover:border-primary-300'
-                                    }`}
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                                        <Sun className="w-5 h-5 text-amber-600" />
-                                    </div>
-                                    <span className={`text-sm font-medium ${theme === 'light' ? 'text-primary-700 dark:text-primary-400' : 'text-text-primary'}`}>Claro</span>
-                                </button>
-
-                                {/* Theme Option: Dark */}
-                                <button
-                                    onClick={() => setTheme('dark')}
-                                    className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                                        theme === 'dark' 
-                                            ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10' 
-                                            : 'border-border bg-surface hover:border-primary-300'
-                                    }`}
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center">
-                                        <Moon className="w-5 h-5 text-slate-300" />
-                                    </div>
-                                    <span className={`text-sm font-medium ${theme === 'dark' ? 'text-primary-700 dark:text-primary-400' : 'text-text-primary'}`}>Oscuro</span>
-                                </button>
-
-                                {/* Theme Option: System */}
-                                <button
-                                    onClick={() => setTheme('system')}
-                                    className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                                        theme === 'system' 
-                                            ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-900/10' 
-                                            : 'border-border bg-surface hover:border-primary-300'
-                                    }`}
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-surface-hover border border-border flex items-center justify-center">
-                                        <Monitor className="w-5 h-5 text-text-secondary" />
-                                    </div>
-                                    <span className={`text-sm font-medium ${theme === 'system' ? 'text-primary-700 dark:text-primary-400' : 'text-text-primary'}`}>Sistema</span>
-                                </button>
+                    <div className="bg-surface-secondary/20 rounded-[3rem] p-10 border border-white/5 space-y-8">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                                <Palette className="w-5 h-5 text-indigo-400" />
                             </div>
+                            <h2 className="text-2xl font-black text-text-primary tracking-tight">Estética Visual</h2>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            <button
+                                onClick={() => setTheme('light')}
+                                className={`flex flex-col items-center gap-4 p-8 rounded-[2rem] border-2 transition-all duration-500 group ${
+                                    theme === 'light' 
+                                        ? 'border-primary-500 bg-primary-600/10' 
+                                        : 'border-white/5 bg-white/5 hover:border-white/20'
+                                }`}
+                            >
+                                <div className="w-16 h-16 rounded-full bg-amber-400/10 flex items-center justify-center group-hover:rotate-12 transition-transform">
+                                    <Sun className="w-8 h-8 text-amber-500" />
+                                </div>
+                                <span className="font-black text-sm uppercase tracking-widest text-text-primary">Claro</span>
+                            </button>
+
+                            <button
+                                onClick={() => setTheme('dark')}
+                                className={`flex flex-col items-center gap-4 p-8 rounded-[2rem] border-2 transition-all duration-500 group ${
+                                    theme === 'dark' 
+                                        ? 'border-primary-500 bg-primary-600/10' 
+                                        : 'border-white/5 bg-white/5 hover:border-white/20'
+                                }`}
+                            >
+                                <div className="w-16 h-16 rounded-full bg-indigo-400/10 flex items-center justify-center group-hover:-rotate-12 transition-transform">
+                                    <Moon className="w-8 h-8 text-indigo-400" />
+                                </div>
+                                <span className="font-black text-sm uppercase tracking-widest text-text-primary">Oscuro</span>
+                            </button>
+
+                            <button
+                                onClick={() => setTheme('system')}
+                                className={`flex flex-col items-center gap-4 p-8 rounded-[2rem] border-2 transition-all duration-500 group ${
+                                    theme === 'system' 
+                                        ? 'border-primary-500 bg-primary-600/10' 
+                                        : 'border-white/5 bg-white/5 hover:border-white/20'
+                                }`}
+                            >
+                                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Monitor className="w-8 h-8 text-text-muted" />
+                                </div>
+                                <span className="font-black text-sm uppercase tracking-widest text-text-primary">Sistema</span>
+                            </button>
                         </div>
                     </div>
 
 
                     {/* -- SECCIÓN PREFERENCIAS -- */}
-                    <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-sm">
-                        <div className="px-6 py-5 border-b border-border flex items-center gap-3">
-                            <Settings2 className="w-5 h-5 text-emerald-500" />
-                            <h2 className="text-lg font-semibold text-text-primary">Preferencias Generales</h2>
+                    <div className="bg-surface-secondary/20 rounded-[3rem] p-10 border border-white/5 space-y-10">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                                <Settings2 className="w-5 h-5 text-emerald-400" />
+                            </div>
+                            <h2 className="text-2xl font-black text-text-primary tracking-tight">Preferencias</h2>
                         </div>
-                        <div className="p-6 space-y-6">
-                            
-                            {/* Toggle Item */}
-                            <div className="flex items-center justify-between">
+                        
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between p-6 bg-white/5 rounded-[2rem] border border-white/5 hover:bg-white/[0.08] transition-colors group">
                                 <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <Bell className="w-4 h-4 text-text-secondary" />
-                                        <h3 className="font-medium text-text-primary">Notificaciones del Sistema</h3>
+                                    <div className="flex items-center gap-3">
+                                        <Bell className="w-4 h-4 text-emerald-400" />
+                                        <h3 className="font-black text-text-primary uppercase tracking-tight text-sm">Notificaciones Inteligentes</h3>
                                     </div>
-                                    <p className="text-sm text-text-muted">Recibir alertas sobre entregas cercanas y alumnos en riesgo.</p>
+                                    <p className="text-xs font-bold text-text-muted opacity-60 ml-7">Alertas críticas sobre entregas y alumnos en riesgo.</p>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input 
@@ -247,21 +244,18 @@ export default function ConfiguracionPage() {
                                         onChange={handleToggleNotification}
                                         disabled={isSavingPrefs.notifications}
                                     />
-                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
-                                    {isSavingPrefs.notifications && <Loader2 className="absolute -left-6 top-1 w-4 h-4 animate-spin text-text-muted" />}
+                                    <div className="w-14 h-8 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-text-muted after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600 peer-checked:after:bg-white"></div>
+                                    {isSavingPrefs.notifications && <Loader2 className="absolute -left-8 top-2 w-4 h-4 animate-spin text-primary-500" />}
                                 </label>
                             </div>
 
-                            <hr className="border-border" />
-
-                            {/* Toggle Item */}
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between p-6 bg-white/5 rounded-[2rem] border border-white/5 hover:bg-white/[0.08] transition-colors group">
                                 <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <Monitor className="w-4 h-4 text-text-secondary" />
-                                        <h3 className="font-medium text-text-primary">Modo Vista Compacta</h3>
+                                    <div className="flex items-center gap-3">
+                                        <Monitor className="w-4 h-4 text-indigo-400" />
+                                        <h3 className="font-black text-text-primary uppercase tracking-tight text-sm">Interfaz de Alta Densidad</h3>
                                     </div>
-                                    <p className="text-sm text-text-muted">Reducir los espacios y fuentes para mostrar más contenido en Tablas y Kanban.</p>
+                                    <p className="text-xs font-bold text-text-muted opacity-60 ml-7">Optimizar espacios para visualización masiva de datos.</p>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input 
@@ -271,14 +265,12 @@ export default function ConfiguracionPage() {
                                         onChange={handleToggleCompact}
                                         disabled={isSavingPrefs.compact}
                                     />
-                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
-                                    {isSavingPrefs.compact && <Loader2 className="absolute -left-6 top-1 w-4 h-4 animate-spin text-text-muted" />}
+                                    <div className="w-14 h-8 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-text-muted after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary-600 peer-checked:after:bg-white"></div>
+                                    {isSavingPrefs.compact && <Loader2 className="absolute -left-8 top-2 w-4 h-4 animate-spin text-primary-500" />}
                                 </label>
                             </div>
-
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

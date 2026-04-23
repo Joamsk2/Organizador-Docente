@@ -28,7 +28,7 @@ export function Sidebar({ userName = 'Docente', userEmail = '', mobileOpen, onMo
     const sidebarContent = (
         <div className="flex flex-col h-full">
             {/* Logo */}
-            <div id="tour-logo" className="flex items-center gap-3 px-5 py-6 border-b border-white/10">
+            <div id="tour-logo" className="flex items-center gap-3 px-5 py-6">
                 <div className="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
                     <GraduationCap className="w-5 h-5 text-white" />
                 </div>
@@ -65,7 +65,7 @@ export function Sidebar({ userName = 'Docente', userEmail = '', mobileOpen, onMo
             </nav>
 
             {/* User */}
-            <div className="px-3 py-4 border-t border-white/10">
+            <div className="px-3 py-4 mt-auto">
                 <Link
                     href="/configuracion"
                     id="tour-settings"
@@ -90,7 +90,7 @@ export function Sidebar({ userName = 'Docente', userEmail = '', mobileOpen, onMo
     return (
         <>
             {/* Desktop sidebar */}
-            <aside className="hidden lg:flex lg:w-[260px] lg:flex-col lg:fixed lg:inset-y-0 bg-sidebar z-40">
+            <aside className="hidden lg:flex lg:w-[260px] lg:flex-col lg:fixed lg:inset-y-0 bg-sidebar z-40 shadow-[4px_0_24px_rgba(0,0,0,0.3)]">
                 {sidebarContent}
             </aside>
 

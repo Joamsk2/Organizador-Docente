@@ -50,7 +50,7 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
         router.refresh()
     }
     return (
-        <header className="sticky top-0 z-30 h-16 bg-surface border-b border-border flex items-center gap-4 px-4 lg:px-6">
+        <header className="sticky top-0 z-30 h-16 bg-surface/80 backdrop-blur-md flex items-center gap-4 px-4 lg:px-6 shadow-sm shadow-black/5">
             {/* Mobile menu button */}
             <button
                 onClick={onMobileMenuToggle}

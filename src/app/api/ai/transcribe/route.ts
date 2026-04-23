@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateObject } from 'ai'
-import { geminiFlashLite } from '@/lib/ai/gemini'
+import { geminiFlash } from '@/lib/ai/gemini'
 import { transcriptionSchema } from '@/lib/ai/schemas'
 import { TRANSCRIPTION_PROMPT } from '@/lib/ai/prompts'
 import { createClient } from '@/lib/supabase/server'
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
         // Send compressed image to Gemini for transcription only
         const { object } = await generateObject({
-            model: geminiFlashLite,
+            model: geminiFlash,
             schema: transcriptionSchema,
             system: TRANSCRIPTION_PROMPT,
             messages: [

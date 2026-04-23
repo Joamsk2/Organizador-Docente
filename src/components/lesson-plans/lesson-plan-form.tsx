@@ -187,7 +187,7 @@ export function LessonPlanForm({ isOpen, onClose, onSubmit, initialData, courseI
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2">
                         <div className="flex items-center justify-between mb-1">
-                            <label className="block text-sm font-medium text-text-secondary">
+                            <label htmlFor="title" className="block text-sm font-medium text-text-secondary">
                                 Título *
                             </label>
                             <button
@@ -209,6 +209,7 @@ export function LessonPlanForm({ isOpen, onClose, onSubmit, initialData, courseI
                         <input
                             type="text"
                             name="title"
+                            id="title"
                             required
                             value={formData.title}
                             onChange={handleChange}
@@ -217,11 +218,12 @@ export function LessonPlanForm({ isOpen, onClose, onSubmit, initialData, courseI
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">
+                        <label htmlFor="type" className="block text-sm font-medium text-text-secondary mb-1">
                             Tipo
                         </label>
                         <select
                             name="type"
+                            id="type"
                             value={formData.type}
                             onChange={handleChange}
                             className="w-full px-3 py-2 bg-surface text-text-primary border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"

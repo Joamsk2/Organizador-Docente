@@ -118,52 +118,79 @@ export default async function CourseOverviewPage({ params }: { params: Promise<{
         }))
 
     return (
-        <div className="space-y-6 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Metric Cards - Taking up half the top row on large screens */}
-                <div className="col-span-1 lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm flex flex-col justify-center">
-                        <div className="flex items-center justify-between mb-4">
-                            <span className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Alumnos Regulares</span>
-                            <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                                <Users className="w-5 h-5" />
+        <div className="space-y-12 pt-8 pb-12">
+            {/* Header / Metrics Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Metrics Layer */}
+                <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="bg-surface-secondary/40 rounded-[2.5rem] p-10 border border-white/5 shadow-2xl backdrop-blur-xl group hover:bg-surface-secondary/60 transition-all duration-500">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Comunidad Educativa</span>
+                                <h3 className="text-xl font-black text-text-primary">Alumnos Regulares</h3>
+                            </div>
+                            <div className="w-14 h-14 rounded-2xl bg-primary-600/10 flex items-center justify-center text-primary-500 group-hover:scale-110 transition-transform duration-500">
+                                <Users className="w-7 h-7" />
                             </div>
                         </div>
-                        <div className="text-4xl font-bold text-text-primary">{studentsCount || 0}</div>
+                        <div className="flex items-baseline gap-3">
+                            <span className="text-6xl font-black text-text-primary tracking-tighter">{studentsCount || 0}</span>
+                            <span className="text-sm font-bold text-text-muted">Inscriptos</span>
+                        </div>
+                        <div className="mt-8 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary-500 w-full opacity-50" />
+                        </div>
                     </div>
 
-                    <div className="bg-surface rounded-2xl p-6 border border-border shadow-sm flex flex-col justify-center">
-                        <div className="flex items-center justify-between mb-4">
-                            <span className="text-sm font-semibold text-text-secondary uppercase tracking-wider">Clases Dictadas</span>
-                            <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                                <Clock className="w-5 h-5" />
+                    <div className="bg-surface-secondary/40 rounded-[2.5rem] p-10 border border-white/5 shadow-2xl backdrop-blur-xl group hover:bg-surface-secondary/60 transition-all duration-500">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Progreso del Ciclo</span>
+                                <h3 className="text-xl font-black text-text-primary">Clases Dictadas</h3>
+                            </div>
+                            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform duration-500">
+                                <Clock className="w-7 h-7" />
                             </div>
                         </div>
-                        <div className="text-4xl font-bold text-text-primary">{attendanceCount ? Math.floor(attendanceCount / (studentsCount || 1)) : 0}</div>
+                        <div className="flex items-baseline gap-3">
+                            <span className="text-6xl font-black text-text-primary tracking-tighter">
+                                {attendanceCount ? Math.floor(attendanceCount / (studentsCount || 1)) : 0}
+                            </span>
+                            <span className="text-sm font-bold text-text-muted">Encuentros</span>
+                        </div>
+                        <div className="mt-8 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 w-[65%] opacity-50" />
+                        </div>
                     </div>
                 </div>
 
-                {/* Sub-components */}
-                <div className="col-span-1 lg:col-span-1">
-                    <UpcomingAssignments assignments={assignments || []} />
-                </div>
-
-                <div className="col-span-1 lg:col-span-1">
+                {/* Quick Info / Risk Layer */}
+                <div className="lg:col-span-4 space-y-6">
                     <StudentsAtRisk students={atRiskStudents} onDismissRisk={handleDismissRisk} />
                 </div>
             </div>
 
-            {/* Chart Section */}
-            {chartData.length > 0 && (
-                <div className="grid grid-cols-1 gap-4">
-                    <MetricsChart
-                        data={chartData}
-                        title="Tendencia de Asistencia (Últimas Clases)"
-                        dataKey="Asistencias"
-                        color="#3b82f6"
-                    />
+            {/* Content Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Chart Section - Professional View */}
+                {chartData.length > 0 && (
+                    <div className="lg:col-span-8">
+                        <div className="bg-surface-secondary/20 rounded-[3rem] p-1 border border-white/5 shadow-inner">
+                            <MetricsChart
+                                data={chartData}
+                                title="Análisis de Asistencia"
+                                dataKey="Asistencias"
+                                color="rgba(99, 102, 241, 0.8)"
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Side Content */}
+                <div className="lg:col-span-4">
+                    <UpcomingAssignments assignments={assignments || []} />
                 </div>
-            )}
+            </div>
         </div>
     )
 }

@@ -41,7 +41,7 @@ export function useLessonPlans(courseIdFilter?: string) {
             // Transform data to include the count nicely
             const formatted = (data || []).map(plan => ({
                 ...plan,
-                assignments_count: plan.lesson_plan_assignments[0]?.count || 0
+                assignments_count: plan.lesson_plan_assignments?.[0]?.count || 0
             })) as unknown as LessonPlanWithStats[]
 
             setPlans(formatted)
