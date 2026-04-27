@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Calendar, FileText, MoreVertical, Edit2, Trash2, Wand2, Search } from 'lucide-react'
+import { Calendar, FileText, MoreVertical, Edit2, Trash2, ClipboardCheck } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { Assignment } from '@/hooks/use-assignments'
@@ -13,11 +13,10 @@ interface AssignmentCardProps {
     assignment: Assignment
     onEdit: (assignment: Assignment) => void
     onDelete: (id: string) => void
-    onConfigureAI: (assignment: Assignment) => void
-    onStudioAI: (assignment: Assignment) => void
+    onCorrect: (assignment: Assignment) => void
 }
 
-export function AssignmentCard({ assignment, onEdit, onDelete, onConfigureAI, onStudioAI }: AssignmentCardProps) {
+export function AssignmentCard({ assignment, onEdit, onDelete, onCorrect }: AssignmentCardProps) {
     const [showActions, setShowActions] = useState(false)
 
     const {
@@ -71,21 +70,11 @@ export function AssignmentCard({ assignment, onEdit, onDelete, onConfigureAI, on
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     setShowActions(false)
-                                    onConfigureAI(assignment)
+                                    onCorrect(assignment)
                                 }}
                                 className="w-full text-left px-3 py-2 text-xs text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 flex items-center gap-2 font-medium"
                             >
-                                <Wand2 className="w-3.5 h-3.5" /> Configurar IA
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    setShowActions(false)
-                                    onStudioAI(assignment)
-                                }}
-                                className="w-full text-left px-3 py-2 text-xs text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 flex items-center gap-2 font-medium"
-                            >
-                                <Search className="w-3.5 h-3.5" /> Estudio IA
+                                <ClipboardCheck className="w-3.5 h-3.5" /> Cargar y Corregir
                             </button>
                             <div className="h-px w-full bg-border"></div>
                             <button

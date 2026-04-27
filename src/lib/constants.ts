@@ -7,7 +7,7 @@ export const NAV_ITEMS = [
     { label: 'Alumnos', href: '/alumnos', icon: 'Users' },
     { label: 'Trabajos Prácticos', href: '/trabajos', icon: 'ClipboardList' },
     { label: 'Calificaciones', href: '/calificaciones', icon: 'BarChart3' },
-    { label: 'Asistencia', href: '/asistencia', icon: 'CalendarCheck' },
+
     { label: 'Planificaciones', href: '/planificaciones', icon: 'FileText' },
 ] as const
 
@@ -33,6 +33,17 @@ export const GRADE_CATEGORIES = [
     { value: 'investigacion', label: 'Investigación' },
     { value: 'autoevaluacion', label: 'Autoevaluación' },
     { value: 'examen', label: 'Examen' },
+] as const
+
+export const PREDEFINED_CRITERIA = [
+    { name: 'Comprensión del tema', defaultWeight: 30 },
+    { name: 'Ortografía y redacción', defaultWeight: 20 },
+    { name: 'Argumentación y desarrollo', defaultWeight: 30 },
+    { name: 'Presentación y organización', defaultWeight: 20 },
+    { name: 'Uso de bibliografía', defaultWeight: 20 },
+    { name: 'Creatividad e investigación', defaultWeight: 20 },
+    { name: 'Participación y esfuerzo', defaultWeight: 10 },
+    { name: 'Puntualidad en la entrega', defaultWeight: 10 },
 ] as const
 
 export const ASSIGNMENT_STATUS_LABELS: Record<string, { label: string; color: string }> = {

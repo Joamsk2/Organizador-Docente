@@ -14,14 +14,19 @@ export async function POST(request: NextRequest) {
         const { data: { user } } = await supabase.auth.getUser()
 
         if (!user) {
+            console.error('[Pre-digest] No user found in session')
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
         }
 
-        const { assignment_id } = await request.json()
+        const body = await request.json().catch(() => ({}))
+        const { assignment_id } = body
 
         if (!assignment_id) {
+            console.error('[Pre-digest] Missing assignment_id in request body')
             return NextResponse.json({ error: 'assignment_id es requerido' }, { status: 400 })
         }
+
+        console.log(`[Pre-digest] Starting process for assignment: ${assignment_id}`)
 
         // Fetch all reference materials for this assignment
         const { data: materials, error: materialsError } = await supabase
@@ -29,9 +34,15 @@ export async function POST(request: NextRequest) {
             .select('*')
             .eq('assignment_id', assignment_id)
 
-        if (materialsError || !materials?.length) {
+        if (materialsError) {
+            console.error('[Pre-digest] Database error fetching materials:', materialsError)
+            return NextResponse.json({ error: 'Error al consultar la base de datos' }, { status: 500 })
+        }
+
+        if (!materials || materials.length === 0) {
+            console.warn(`[Pre-digest] No materials found for assignment ${assignment_id}`)
             return NextResponse.json(
-                { error: 'No se encontraron materiales de referencia para este trabajo' },
+                { error: 'No se encontraron materiales de referencia. Por favor, agregue consignas o textos al trabajo.' },
                 { status: 404 }
             )
         }
@@ -43,22 +54,58 @@ export async function POST(request: NextRequest) {
                     m.material_type === 'instructions' ? '📋 Consignas' :
                         '✅ Criterios de Evaluación'
 
-            return `### ${typeLabel}: ${m.title}\n${m.content_text || '[Archivo adjunto - ver file_url]'}`
+            return `### ${typeLabel}: ${m.title}\n${m.content_text || '[Archivo adjunto sin texto extraído]'}`
         }).join('\n\n---\n\n')
 
-        // Generate digest with structured output
-        const { object } = await generateObject({
-            model: geminiFlashLite,
-            schema: preDigestSchema,
-            system: PRE_DIGEST_PROMPT,
-            prompt: `Analiza y condensa el siguiente material:\n\n${contentParts}`,
-            maxRetries: 3,
-        })
+        console.log(`[Pre-digest] Processing ${materials.length} materials. Total content: ${contentParts.length} chars.`)
 
-        // Store the digest back in the first reference material (or a dedicated field)
-        // For now, update topics based on AI analysis
+        if (contentParts.length < 5) { // Relaxed check
+             return NextResponse.json(
+                { error: 'El material de referencia está vacío. Por favor, asegúrese de que el trabajo tenga consignas o material de lectura.' },
+                { status: 400 }
+            )
+        }
+
+        // Generate digest with structured output
+        console.log('[Pre-digest] Calling AI model...')
+        let result;
+        try {
+            result = await generateObject({
+                model: geminiFlashLite,
+                schema: preDigestSchema,
+                system: PRE_DIGEST_PROMPT,
+                prompt: `Analiza y condensa el siguiente material:\n\n${contentParts}`,
+                maxRetries: 3,
+            })
+        } catch (aiError: any) {
+            console.error('[Pre-digest] AI Generation failed:', aiError)
+            return NextResponse.json({ 
+                error: `Fallo la generación por IA: ${aiError.message || 'Error desconocido'}`,
+                details: aiError.stack
+            }, { status: 502 })
+        }
+
+        const { object } = result
+        console.log(`[Pre-digest] AI Success. Digest length: ${object.digest?.length || 0}`)
+
+        if (!object.digest) {
+            throw new Error('El modelo no generó un resumen válido')
+        }
+
+        // Store the digest back in the assignment table
+        const { error: updateError } = await supabase
+            .from('assignments')
+            .update({ digest: object.digest })
+            .eq('id', assignment_id)
+
+        if (updateError) {
+            console.error('[Pre-digest] Error saving digest to assignments table:', updateError)
+            // Continue anyway, we can return the digest to the client
+        }
+
+        // Also update topics in reading material if exists
         const readingMaterial = materials.find(m => m.material_type === 'reading_material')
-        if (readingMaterial) {
+        if (readingMaterial && object.key_topics?.length > 0) {
             await supabase
                 .from('assignment_reference_materials')
                 .update({ topics: object.key_topics })
@@ -71,11 +118,12 @@ export async function POST(request: NextRequest) {
             key_topics: object.key_topics,
         })
 
-    } catch (error) {
-        console.error('Pre-digest error:', error)
+    } catch (error: any) {
+        console.error('[Pre-digest] Unexpected system error:', error)
         return NextResponse.json(
-            { error: 'Error al procesar los materiales' },
+            { error: `Error interno: ${error.message || 'Ocurrió un error inesperado'}` },
             { status: 500 }
         )
     }
+
 }

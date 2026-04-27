@@ -58,7 +58,7 @@ export default function AgendaPage() {
             .select(`
                 id, day_of_week, start_time, end_time, classroom,
                 courses (
-                    name, color,
+                    id, name, color,
                     schools (name)
                 )
             `)
@@ -274,7 +274,7 @@ export default function AgendaPage() {
                                             </div>
 
                                             <Link 
-                                                href={`/asistencia?courseId=${(cls.courses as any).id}`}
+                                                href={`/cursos/${(cls.courses as any).id}/asistencia`}
                                                 className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-primary-600 text-white font-black hover:bg-primary-700 transition-all shadow-xl shadow-primary-600/30"
                                             >
                                                 <ClipboardList className="w-5 h-5" />
@@ -298,7 +298,7 @@ export default function AgendaPage() {
                                 <h3 className="text-xl font-black text-text-primary mb-1">{cls.courses?.name}</h3>
                                 <p className="text-sm text-text-muted font-bold mb-6">{cls.courses?.schools?.name}</p>
                                 <Link 
-                                    href={`/asistencia?courseId=${(cls.courses as any).id}`}
+                                    href={`/cursos/${(cls.courses as any).id}/asistencia`}
                                     className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-primary-600 text-white font-black shadow-lg shadow-primary-600/20"
                                 >
                                     Tomar Asistencia

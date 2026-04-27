@@ -72,6 +72,17 @@ export function AiConfigView({ courseId, assignment }: AiConfigViewProps) {
         const loadExisting = async () => {
             const supabase = createClient()
 
+            // Fetch assignment to get the digest
+            const { data: assignmentData } = await supabase
+                .from('assignments')
+                .select('digest')
+                .eq('id', assignment.id)
+                .single()
+
+            if (assignmentData?.digest) {
+                setDigest(assignmentData.digest)
+            }
+
             // Fetch existing reference materials
             const { data: materials } = await supabase
                 .from('assignment_reference_materials')
@@ -115,7 +126,10 @@ export function AiConfigView({ courseId, assignment }: AiConfigViewProps) {
                 const readingMaterial = materials.find(m => m.material_type === 'reading_material')
                 if (readingMaterial?.topics && readingMaterial.topics.length > 0) {
                     setKeyTopics(readingMaterial.topics)
-                    setDigest('Digest generado previamente')
+                    // If we have topics but no digest in state yet (fallback for older records)
+                    if (!digest && readingMaterial.content_text) {
+                        setDigest(readingMaterial.content_text)
+                    }
                     setStep('ready')
                 }
             }
@@ -322,9 +336,21 @@ export function AiConfigView({ courseId, assignment }: AiConfigViewProps) {
             })
 
             if (!response.ok) {
-                const errorData = await response.json()
-                throw new Error(errorData.error || 'Error al generar el digest')
+                let errorMessage = 'Error al generar el digest'
+                try {
+                    const errorData = await response.json()
+                    errorMessage = errorData.error || errorMessage
+                } catch (e) {
+                    const rawText = await response.text().catch(() => '')
+                    if (rawText.includes('<html')) {
+                        errorMessage = `Error del servidor (${response.status}). Intente nuevamente.`
+                    } else if (rawText) {
+                        errorMessage = rawText.slice(0, 100)
+                    }
+                }
+                throw new Error(errorMessage)
             }
+
 
             const result = await response.json()
             setDigest(result.digest)
