@@ -36,7 +36,7 @@ describe('POST /api/ai/transcribe', () => {
       body: JSON.stringify({ image_base64: 'base64data' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(401)
 
     const json = await res.json()
@@ -55,7 +55,7 @@ describe('POST /api/ai/transcribe', () => {
       body: JSON.stringify({ mime_type: 'image/jpeg' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(400)
 
     const json = await res.json()
@@ -85,7 +85,7 @@ describe('POST /api/ai/transcribe', () => {
       }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(200)
 
     const json = await res.json()
@@ -119,7 +119,7 @@ describe('POST /api/ai/transcribe', () => {
       }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(200)
 
     const json = await res.json()
@@ -151,12 +151,14 @@ describe('POST /api/ai/transcribe', () => {
       }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(200)
 
     // Verify that generateObject was called with image/webp default
     const callArgs = mockedGenerateObject.mock.calls[0][0]
-    expect(callArgs.messages[0].content[0].image).toContain('data:image/webp')
+    const content = callArgs.messages?.[0]?.content
+    const imagePart = Array.isArray(content) ? content.find((c: any) => c.type === 'image') : null
+    expect((imagePart as any)?.image).toContain('data:image/webp')
   })
 
   it('returns 500 when generateObject throws', async () => {
@@ -176,7 +178,7 @@ describe('POST /api/ai/transcribe', () => {
       }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(500)
 
     const json = await res.json()

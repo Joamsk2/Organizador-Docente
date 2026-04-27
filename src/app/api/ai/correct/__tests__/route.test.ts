@@ -36,7 +36,7 @@ describe('POST /api/ai/correct', () => {
       body: JSON.stringify({ assignment_id: 'a1', digest: 'content' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(401)
 
     const json = await res.json()
@@ -55,7 +55,7 @@ describe('POST /api/ai/correct', () => {
       body: JSON.stringify({ assignment_id: 'a1' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(400)
 
     const json = await res.json()
@@ -97,7 +97,7 @@ describe('POST /api/ai/correct', () => {
       body: JSON.stringify({ assignment_id: 'a1', digest: 'content' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(404)
 
     const json = await res.json()
@@ -173,7 +173,7 @@ describe('POST /api/ai/correct', () => {
       body: JSON.stringify({ assignment_id: 'a1', digest: 'content digest' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(200)
 
     const json = await res.json()
@@ -223,7 +223,7 @@ describe('POST /api/ai/correct', () => {
       body: JSON.stringify({ assignment_id: 'a1', digest: 'content' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(500)
 
     const json = await res.json()

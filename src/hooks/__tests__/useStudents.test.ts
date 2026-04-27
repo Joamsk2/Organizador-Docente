@@ -128,7 +128,7 @@ describe('useStudents', () => {
     const { result } = renderHook(() => useStudents())
 
     await act(async () => {
-      await result.current.createStudent({ first_name: 'María' }, ['c1'])
+      await result.current.createStudent({ first_name: 'María', last_name: 'Lopez' }, ['c1'])
     })
 
     expect(toast.error).toHaveBeenCalledWith('Alumno creado, pero hubo un error al matricularlo en algunos cursos')
@@ -247,7 +247,7 @@ describe('useStudents', () => {
     const { result } = renderHook(() => useStudents())
 
     await act(async () => {
-      await result.current.createStudentsBulk([{ first_name: 'Juan' }], ['c1'])
+      await result.current.createStudentsBulk([{ first_name: 'Juan', last_name: 'Doe' }], ['c1'])
     })
 
     expect(toast.error).toHaveBeenCalledWith('Alumnos creados, pero hubo un error al matricularlos en algunos cursos')

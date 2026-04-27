@@ -209,13 +209,13 @@ export function useAssignments(courseId: string | null) {
                     } catch (e) {
                         console.error('Error uploading new material file:', e)
                     }
-                } else if (material.url) {
+                } else if (material.fileUrl) {
                     // Keep existing file reference
                     await supabase.from('assignment_reference_materials').insert({
                         assignment_id: id,
                         material_type: 'reading_material',
                         title: material.title,
-                        file_url: material.url,
+                        file_url: material.fileUrl,
                     })
                 }
             }

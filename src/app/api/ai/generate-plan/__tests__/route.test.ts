@@ -24,7 +24,7 @@ describe('POST /api/ai/generate-plan', () => {
       body: JSON.stringify({ type: 'clase' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(400)
 
     const json = await res.json()
@@ -41,7 +41,7 @@ describe('POST /api/ai/generate-plan', () => {
       body: JSON.stringify({ title: 'Revolución de Mayo', type: 'clase' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(200)
 
     const json = await res.json()
@@ -56,7 +56,7 @@ describe('POST /api/ai/generate-plan', () => {
       body: JSON.stringify({ title: 'Tema', type: 'clase' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(500)
 
     const json = await res.json()

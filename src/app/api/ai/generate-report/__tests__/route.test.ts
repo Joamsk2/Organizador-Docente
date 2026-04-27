@@ -36,7 +36,7 @@ describe('POST /api/ai/generate-report', () => {
       body: JSON.stringify({ student_id: 's1', course_id: 'c1' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(401)
 
     const json = await res.json()
@@ -55,7 +55,7 @@ describe('POST /api/ai/generate-report', () => {
       body: JSON.stringify({ student_id: 's1' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(400)
 
     const json = await res.json()
@@ -166,7 +166,7 @@ describe('POST /api/ai/generate-report', () => {
       }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(200)
 
     const json = await res.json()
@@ -260,7 +260,7 @@ describe('POST /api/ai/generate-report', () => {
       }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(200)
 
     const json = await res.json()
@@ -306,7 +306,7 @@ describe('POST /api/ai/generate-report', () => {
       body: JSON.stringify({ student_id: 's1', course_id: 'c1' }),
     })
 
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(500)
 
     const json = await res.json()
