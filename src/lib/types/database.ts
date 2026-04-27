@@ -168,6 +168,7 @@ export type Database = {
           course_id: string
           created_at: string | null
           description: string | null
+          digest: string | null
           due_date: string | null
           id: string
           status: Database["public"]["Enums"]["assignment_status"] | null
@@ -180,6 +181,7 @@ export type Database = {
           course_id: string
           created_at?: string | null
           description?: string | null
+          digest?: string | null
           due_date?: string | null
           id?: string
           status?: Database["public"]["Enums"]["assignment_status"] | null
@@ -192,6 +194,7 @@ export type Database = {
           course_id?: string
           created_at?: string | null
           description?: string | null
+          digest?: string | null
           due_date?: string | null
           id?: string
           status?: Database["public"]["Enums"]["assignment_status"] | null
