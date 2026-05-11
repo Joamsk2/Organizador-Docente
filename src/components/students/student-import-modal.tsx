@@ -59,10 +59,6 @@ export function StudentImportModal({ isOpen, onClose, courseId, onImport }: Stud
 
         const first_name = getVal(['nombre', 'nombres', 'firstname', 'first'])
         const last_name = getVal(['apellido', 'apellidos', 'lastname', 'last'])
-        const dni = getVal(['dni', 'documento', 'id'])
-        const email = getVal(['email', 'correo', 'mail'])
-        const phone = getVal(['telefono', 'celular', 'phone'])
-        const notes = getVal(['notas', 'observaciones', 'notes'])
 
         if (!first_name) errors.push('Falta el nombre')
         if (!last_name) errors.push('Falta el apellido')
@@ -70,10 +66,6 @@ export function StudentImportModal({ isOpen, onClose, courseId, onImport }: Stud
         return {
             first_name,
             last_name,
-            dni: dni || null,
-            email: email || null,
-            phone: phone || null,
-            notes: notes || null,
             _isValid: errors.length === 0,
             _errors: errors
         }
@@ -204,7 +196,7 @@ export function StudentImportModal({ isOpen, onClose, courseId, onImport }: Stud
                                 <FileSpreadsheet className="w-12 h-12 text-primary-400 mx-auto mb-4" />
                                 <h3 className="text-lg font-semibold text-text-primary mb-2">Sube un archivo CSV o Excel</h3>
                                 <p className="text-sm text-text-secondary mb-6 max-w-sm mx-auto">
-                                    El archivo debe contener columnas como "Nombre" y "Apellido". Opcionalmente: "DNI", "Email", "Teléfono", "Notas".
+                                    El archivo debe contener columnas como "Nombre" y "Apellido".
                                 </p>
                                 <input
                                     type="file"
@@ -229,7 +221,7 @@ export function StudentImportModal({ isOpen, onClose, courseId, onImport }: Stud
                                 <textarea
                                     value={pasteText}
                                     onChange={(e) => setPasteText(e.target.value)}
-                                    placeholder="Nombre&#9;Apellido&#9;DNI&#10;Juan&#9;Pérez&#9;12345678"
+                                    placeholder="Nombre&#9;Apellido&#10;Juan&#9;Pérez"
                                     className="w-full h-64 p-4 text-sm font-mono bg-surface border border-border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                                 />
                                 <div className="flex justify-end">
@@ -275,8 +267,6 @@ export function StudentImportModal({ isOpen, onClose, courseId, onImport }: Stud
                                         <th className="px-4 py-3 font-semibold text-text-secondary">Estado</th>
                                         <th className="px-4 py-3 font-semibold text-text-secondary">Nombre</th>
                                         <th className="px-4 py-3 font-semibold text-text-secondary">Apellido</th>
-                                        <th className="px-4 py-3 font-semibold text-text-secondary">DNI</th>
-                                        <th className="px-4 py-3 font-semibold text-text-secondary">Email</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
@@ -294,8 +284,6 @@ export function StudentImportModal({ isOpen, onClose, courseId, onImport }: Stud
                                             </td>
                                             <td className="px-4 py-3 font-medium text-text-primary">{student.first_name || '-'}</td>
                                             <td className="px-4 py-3 font-medium text-text-primary">{student.last_name || '-'}</td>
-                                            <td className="px-4 py-3 text-text-secondary">{student.dni || '-'}</td>
-                                            <td className="px-4 py-3 text-text-secondary">{student.email || '-'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

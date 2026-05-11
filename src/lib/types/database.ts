@@ -64,7 +64,7 @@ export type Database = {
           {
             foreignKeyName: "ai_corrections_submission_id_fkey"
             columns: ["submission_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "assignment_submissions"
             referencedColumns: ["id"]
           },
@@ -170,7 +170,9 @@ export type Database = {
           description: string | null
           digest: string | null
           due_date: string | null
+          grading_type: string | null
           id: string
+          origin_class_session_id: string | null
           status: Database["public"]["Enums"]["assignment_status"] | null
           title: string
           type: Database["public"]["Enums"]["assignment_type"] | null
@@ -183,7 +185,9 @@ export type Database = {
           description?: string | null
           digest?: string | null
           due_date?: string | null
+          grading_type?: string | null
           id?: string
+          origin_class_session_id?: string | null
           status?: Database["public"]["Enums"]["assignment_status"] | null
           title: string
           type?: Database["public"]["Enums"]["assignment_type"] | null
@@ -196,7 +200,9 @@ export type Database = {
           description?: string | null
           digest?: string | null
           due_date?: string | null
+          grading_type?: string | null
           id?: string
+          origin_class_session_id?: string | null
           status?: Database["public"]["Enums"]["assignment_status"] | null
           title?: string
           type?: Database["public"]["Enums"]["assignment_type"] | null
@@ -208,6 +214,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_origin_class_session_id_fkey"
+            columns: ["origin_class_session_id"]
+            isOneToOne: false
+            referencedRelation: "class_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -253,6 +266,166 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string
+          table_name: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id: string
+          table_name: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string
+          table_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      class_materials: {
+        Row: {
+          class_session_id: string
+          content: string | null
+          created_at: string
+          id: string
+          order_index: number | null
+          title: string
+          type: string
+        }
+        Insert: {
+          class_session_id: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number | null
+          title: string
+          type: string
+        }
+        Update: {
+          class_session_id?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          order_index?: number | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_materials_class_session_id_fkey"
+            columns: ["class_session_id"]
+            isOneToOne: false
+            referencedRelation: "class_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_session_topics: {
+        Row: {
+          class_session_id: string
+          created_at: string
+          topic_id: string
+        }
+        Insert: {
+          class_session_id: string
+          created_at?: string
+          topic_id: string
+        }
+        Update: {
+          class_session_id?: string
+          created_at?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_session_topics_class_session_id_fkey"
+            columns: ["class_session_id"]
+            isOneToOne: false
+            referencedRelation: "class_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_session_topics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_sessions: {
+        Row: {
+          activities: string | null
+          course_id: string
+          created_at: string | null
+          date: string
+          general_notes: string | null
+          id: string
+          instructions: string | null
+          next_class_reminders: string | null
+          next_class_topic: string | null
+          teacher_notes: string | null
+          title: string | null
+          topic: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activities?: string | null
+          course_id: string
+          created_at?: string | null
+          date?: string
+          general_notes?: string | null
+          id?: string
+          instructions?: string | null
+          next_class_reminders?: string | null
+          next_class_topic?: string | null
+          teacher_notes?: string | null
+          title?: string | null
+          topic?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activities?: string | null
+          course_id?: string
+          created_at?: string | null
+          date?: string
+          general_notes?: string | null
+          id?: string
+          instructions?: string | null
+          next_class_reminders?: string | null
+          next_class_topic?: string | null
+          teacher_notes?: string | null
+          title?: string | null
+          topic?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_sessions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
             referencedColumns: ["id"]
           },
         ]
@@ -375,6 +548,79 @@ export type Database = {
           },
         ]
       }
+      curriculum_modules: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          id: string
+          order_index: number | null
+          title: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number | null
+          title: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculum_topics: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          module_id: string
+          order_index: number | null
+          status: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          module_id: string
+          order_index?: number | null
+          status?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          module_id?: string
+          order_index?: number | null
+          status?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_topics_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grades: {
         Row: {
           assignment_id: string | null
@@ -382,6 +628,7 @@ export type Database = {
           course_id: string
           created_at: string | null
           id: string
+          is_qualitative: boolean | null
           observations: string | null
           period: Database["public"]["Enums"]["grade_period"]
           student_id: string
@@ -394,6 +641,7 @@ export type Database = {
           course_id: string
           created_at?: string | null
           id?: string
+          is_qualitative?: boolean | null
           observations?: string | null
           period: Database["public"]["Enums"]["grade_period"]
           student_id: string
@@ -406,6 +654,7 @@ export type Database = {
           course_id?: string
           created_at?: string | null
           id?: string
+          is_qualitative?: boolean | null
           observations?: string | null
           period?: Database["public"]["Enums"]["grade_period"]
           student_id?: string
@@ -550,6 +799,57 @@ export type Database = {
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_daily_records: {
+        Row: {
+          created_at: string | null
+          id: string
+          performance_score:
+            | Database["public"]["Enums"]["performance_level"]
+            | null
+          quick_notes: string | null
+          session_id: string
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          performance_score?:
+            | Database["public"]["Enums"]["performance_level"]
+            | null
+          quick_notes?: string | null
+          session_id: string
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          performance_score?:
+            | Database["public"]["Enums"]["performance_level"]
+            | null
+          quick_notes?: string | null
+          session_id?: string
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_daily_records_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "class_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_daily_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -776,6 +1076,7 @@ export type Database = {
         | "3er_trimestre"
         | "final"
       lesson_plan_type: "anual" | "unidad" | "clase" | "armani"
+      performance_level: "excelente" | "bien" | "regular" | "mal"
       school_level: "primaria" | "secundaria" | "terciario" | "universitario"
       school_shift: "mañana" | "tarde" | "noche" | "vespertino"
       submission_status: "pendiente" | "entregado" | "corregido"
@@ -924,10 +1225,10 @@ export const Constants = {
         "final",
       ],
       lesson_plan_type: ["anual", "unidad", "clase", "armani"],
+      performance_level: ["excelente", "bien", "regular", "mal"],
       school_level: ["primaria", "secundaria", "terciario", "universitario"],
       school_shift: ["mañana", "tarde", "noche", "vespertino"],
       submission_status: ["pendiente", "entregado", "corregido"],
     },
   },
 } as const
-

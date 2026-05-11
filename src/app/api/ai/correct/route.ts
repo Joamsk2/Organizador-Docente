@@ -5,8 +5,8 @@ import { batchCorrectionSchema } from '@/lib/ai/schemas'
 import { CORRECTION_PROMPT } from '@/lib/ai/prompts'
 import { createClient } from '@/lib/supabase/server'
 
-// Batch size for corrections (reduced for multi-modal processing)
-const BATCH_SIZE = 2
+// Batch size for corrections (reduced to 1 to avoid Vercel Hobby timeouts)
+const BATCH_SIZE = 1
 
 // Max Vercel Function Duration (Seconds)
 export const maxDuration = 60
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
         }
 
-        let { assignment_id, digest } = await request.json()
+        let { assignment_id, digest, student_ids } = await request.json()
 
         if (!assignment_id) {
             return NextResponse.json({ error: 'assignment_id es requerido' }, { status: 400 })
@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
             .eq('assignment_id', assignment_id)
             .eq('material_type', 'evaluation_criteria')
 
-        // Fetch all pending submissions for this assignment
-        const { data: submissions, error: subError } = await supabase
+        // Fetch submissions
+        let query = supabase
             .from('assignment_submissions')
             .select(`
                 id,
@@ -62,11 +62,20 @@ export async function POST(request: NextRequest) {
                 students!inner(first_name, last_name)
             `)
             .eq('assignment_id', assignment_id)
-            .eq('status', 'entregado')
+        
+        // If specific student_ids are provided, filter by them and allow 'corregido' status
+        if (student_ids && Array.isArray(student_ids) && student_ids.length > 0) {
+            query = query.in('student_id', student_ids)
+        } else {
+            // Default batch: include 'entregado' (new) and 'corregido' (re-correction allowed)
+            query = query.in('status', ['entregado', 'corregido']).limit(2) // Limitamos a 2 para evitar timeout de 10s en Vercel Hobby
+        }
+
+        const { data: submissions, error: subError } = await query
 
         if (subError || !submissions?.length) {
             return NextResponse.json(
-                { error: 'No hay entregas pendientes para corregir' },
+                { error: 'No hay entregas para corregir' },
                 { status: 404 }
             )
         }
@@ -91,8 +100,22 @@ export async function POST(request: NextRequest) {
 
             for (let idx = 0; idx < batch.length; idx++) {
                 const sub = batch[idx]
-                const student = sub.students as unknown as { first_name: string; last_name: string }
                 
+                // Supabase join can return an object or an array depending on the query/config
+                const studentData = sub.students as any
+                const student = Array.isArray(studentData) ? studentData[0] : studentData
+
+                if (!student) {
+                    console.warn(`No student data found for submission ${sub.id}`)
+                    continue
+                }
+                
+                // Skip students with no content to avoid AI confusion/failure
+                if (!sub.feedback && (!sub.file_urls || sub.file_urls.length === 0)) {
+                    console.log(`Skipping student ${student.first_name} ${student.last_name} (no content)`)
+                    continue
+                }
+
                 let studentBlock = `\n\n### Alumno ${idx + 1} (ID: ${sub.student_id})\nNombre: ${student.first_name} ${student.last_name}\nRespuesta de texto: ${sub.feedback || '[Sin texto escrito]'}`
                 
                 if (sub.file_urls && sub.file_urls.length > 0) {
@@ -135,32 +158,48 @@ export async function POST(request: NextRequest) {
                 }
             }
 
-            const { object } = await generateObject({
-                model: geminiFlash,
-                schema: batchCorrectionSchema,
-                system: CORRECTION_PROMPT,
-                messages: [
-                    {
-                        role: 'user',
-                        content: messageContent,
-                    }
-                ],
-                maxRetries: 2,
-            })
+            try {
+                const { object } = await generateObject({
+                    model: geminiFlash,
+                    schema: batchCorrectionSchema,
+                    system: CORRECTION_PROMPT,
+                    messages: [
+                        {
+                            role: 'user',
+                            content: messageContent,
+                        }
+                    ],
+                    maxRetries: 1, // Reduced for faster failure detection during debugging
+                })
 
-            // Map corrections to submissions
-            object.corrections.forEach((correction, idx) => {
-                if (batch[idx]) {
-                    allCorrections.push({
-                        submission_id: batch[idx].id,
-                        student_id: batch[idx].student_id,
-                        correction: correction as unknown as Record<string, unknown>,
-                    })
+                console.log(`AI Response for batch starting at ${i}:`, object.corrections.length, 'corrections received')
+
+                // Map corrections to submissions by matching student_id
+                object.corrections.forEach((correction) => {
+                    const sub = batch.find(s => s.student_id === correction.student_id)
+                    if (sub) {
+                        allCorrections.push({
+                            submission_id: sub.id,
+                            student_id: sub.student_id,
+                            correction: correction as unknown as Record<string, unknown>,
+                        })
+                    } else {
+                        console.warn(`AI returned correction for student_id ${correction.student_id} not in current batch`)
+                        // Fallback to position if student_id matching fails (AI might hallucinate ID)
+                        // but let's be strict for now to avoid data corruption
+                    }
+                })
+            } catch (aiError: any) {
+                console.error('AI Generation Error Details:', JSON.stringify(aiError, null, 2))
+                // If it's a validation error, log the response if available
+                if (aiError.response) {
+                    console.error('AI Raw Response:', aiError.response)
                 }
-            })
+                throw new Error(`Error de IA: ${aiError.message || 'Fallo en la generación'}`)
+            }
         }
 
-        // Save all corrections to database
+        // Save all corrections to database using upsert to allow re-correcciones
         for (const { submission_id, correction } of allCorrections) {
             const insertData: any = {
                 submission_id,
@@ -171,14 +210,15 @@ export async function POST(request: NextRequest) {
                 improvement_suggestions: correction.improvement_suggestions,
                 correction_summary: correction.correction_summary,
                 status: 'corrected_by_ai',
+                updated_at: new Date().toISOString(),
             }
 
-            const { error: insertError } = await supabase
+            const { error: upsertError } = await supabase
                 .from('ai_corrections')
-                .insert(insertData)
+                .upsert(insertData, { onConflict: 'submission_id' })
 
-            if (insertError) {
-                console.error('Insert error:', insertError)
+            if (upsertError) {
+                console.error('Upsert error:', upsertError)
             }
         }
 
@@ -189,10 +229,17 @@ export async function POST(request: NextRequest) {
             corrections: allCorrections,
         })
 
-    } catch (error) {
-        console.error('Correction error:', error)
+    } catch (error: any) {
+        console.error('CRITICAL ERROR in /api/ai/correct:')
+        console.error('Message:', error.message)
+        console.error('Stack:', error.stack)
+        if (error.cause) console.error('Cause:', error.cause)
+        
         return NextResponse.json(
-            { error: 'Error en la corrección automática' },
+            { 
+                error: 'Error en la corrección automática',
+                details: error.message || String(error)
+            },
             { status: 500 }
         )
     }

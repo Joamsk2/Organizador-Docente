@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { Modal } from '@/components/ui/modal'
 import { Loader2, Plus, X, Upload, FileText, BookOpen, ChevronDown, ChevronUp } from 'lucide-react'
 import type { Database } from '@/lib/types/database'
@@ -30,6 +30,7 @@ interface AssignmentFormProps {
     onSubmit: (data: any, criteria: EvaluationCriterion[], materials: ReferenceMaterial[]) => Promise<boolean>
     initialData?: any
     courseId: string
+    initialSessionId?: string | null
 }
 
 const ASSIGNMENT_TYPES = [
@@ -41,7 +42,7 @@ const ASSIGNMENT_TYPES = [
     { value: 'autoevaluacion', label: 'Autoevaluación' },
 ]
 
-export function AssignmentForm({ isOpen, onClose, onSubmit, initialData, courseId }: AssignmentFormProps) {
+export function AssignmentForm({ isOpen, onClose, onSubmit, initialData, courseId, initialSessionId }: AssignmentFormProps) {
     const [loading, setLoading] = useState(false)
     const [activeSection, setActiveSection] = useState<'info' | 'criteria' | 'materials'>('info')
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -70,6 +71,49 @@ export function AssignmentForm({ isOpen, onClose, onSubmit, initialData, courseI
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
     }
+
+    // --- Pre-fill from session ---
+    const hasFetchedSession = useRef(false)
+    useEffect(() => {
+        if (!initialSessionId || hasFetchedSession.current || initialData) return
+        
+        async function fetchSessionInfo() {
+            hasFetchedSession.current = true
+            const supabase = createClient()
+            const { data: session } = await supabase
+                .from('class_sessions')
+                .select(`
+                    instructions,
+                    class_materials (*)
+                `)
+                .eq('id', initialSessionId as string)
+                .single()
+                
+            if (session) {
+                if (session.instructions) {
+                    setFormData(prev => ({ ...prev, description: session.instructions }))
+                }
+                
+                if (session.class_materials && session.class_materials.length > 0) {
+                    const mappedMaterials: ReferenceMaterial[] = (session.class_materials as any[]).map(m => {
+                        // If it's a file, we can't easily turn it back into a File object, so we might skip or handle as text/link
+                        // For rich_text and link, we can just add them as text
+                        if (m.type === 'rich_text' || m.type === 'link') {
+                            return { type: 'text', title: m.title, content: m.content || '' }
+                        }
+                        // If it was a file, we don't have the fileUrl unless we fetch it, 
+                        // but since they were just uploaded in cockpit, they might not be fully migrated. 
+                        // We'll just map them as text with their title for now so the user knows they exist.
+                        return { type: 'text', title: m.title, content: 'Archivo adjunto en la bitácora: ' + m.title }
+                    })
+                    setMaterials(prev => [...prev, ...mappedMaterials])
+                    toast.info('Se importaron consignas y materiales de la clase')
+                }
+            }
+        }
+        
+        fetchSessionInfo()
+    }, [initialSessionId, initialData])
 
     // --- Criteria logic ---
     const togglePredefinedCriterion = (name: string, defaultWeight: number) => {
@@ -151,7 +195,8 @@ export function AssignmentForm({ isOpen, onClose, onSubmit, initialData, courseI
             type: formData.type as AssignmentType,
             due_date: formData.due_date || null,
             course_id: courseId,
-            status: initialData ? initialData.status : 'borrador'
+            status: initialData ? initialData.status : 'borrador',
+            origin_class_session_id: initialSessionId || null
         }
 
         const success = await onSubmit(payload, selectedCriteria, materials)

@@ -1,14 +1,27 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Loader2, Users, BookOpen } from 'lucide-react'
+import { Plus, Loader2, Users, BookOpen, Trash2, AlertTriangle, X } from 'lucide-react'
+import { Modal } from '@/components/ui/modal'
 import { StudentWithCourses } from '@/hooks/use-students'
 import type { Database } from '@/lib/types/database'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
-type Grade = Database['public']['Tables']['grades']['Row']
-type InsertGrade = Database['public']['Tables']['grades']['Insert']
+type Grade = Database['public']['Tables']['grades']['Row'] & { is_qualitative?: boolean | null }
+type InsertGrade = Database['public']['Tables']['grades']['Insert'] & { is_qualitative?: boolean | null }
+
+const QUALITATIVE_SCALE = [
+    { label: 'Mal', short: 'Mal', value: 4, color: 'bg-red-500', textColor: 'text-white', hoverColor: 'hover:bg-red-600' },
+    { label: 'Regular', short: 'Reg.', value: 7, color: 'bg-amber-400', textColor: 'text-amber-950', hoverColor: 'hover:bg-amber-500' },
+    { label: 'Bien', short: 'Bien', value: 8, color: 'bg-emerald-400', textColor: 'text-emerald-950', hoverColor: 'hover:bg-emerald-500' },
+    { label: 'Excelente', short: 'Exc.', value: 10, color: 'bg-emerald-600', textColor: 'text-white', hoverColor: 'hover:bg-emerald-700' },
+]
+
+interface SuggestedColumn {
+    id: string
+    title: string
+}
 
 interface GradesSpreadsheetProps {
     courseId: string
@@ -16,9 +29,11 @@ interface GradesSpreadsheetProps {
     students: StudentWithCourses[]
     grades: Grade[]
     loading: boolean
-    suggestedColumns?: string[]
+    suggestedColumns?: SuggestedColumn[]
     onSaveGrade: (data: InsertGrade) => Promise<any>
     onDeleteGrade: (id: string) => Promise<any>
+    onDeleteCategory: (category: string) => Promise<boolean>
+    onDeleteAssignment?: (id: string) => Promise<boolean>
 }
 
 export function GradesSpreadsheet({
@@ -29,20 +44,41 @@ export function GradesSpreadsheet({
     loading,
     suggestedColumns,
     onSaveGrade,
-    onDeleteGrade
+    onDeleteGrade,
+    onDeleteCategory,
+    onDeleteAssignment
 }: GradesSpreadsheetProps) {
     const [columns, setColumns] = useState<string[]>([])
     const [newColumnName, setNewColumnName] = useState('')
     const [isAddingColumn, setIsAddingColumn] = useState(false)
+    const [isQualitativeMode, setIsQualitativeMode] = useState(true) // Mode for the NEW column being added
+    const [columnTypes, setColumnTypes] = useState<Record<string, 'numeric' | 'qualitative'>>({})
+    const [hiddenColumns, setHiddenColumns] = useState<string[]>([])
+    const [columnToDelete, setColumnToDelete] = useState<string | null>(null)
+    const [isDeletingLoading, setIsDeletingLoading] = useState(false)
+    const [deleteAssignmentToo, setDeleteAssignmentToo] = useState(false)
+
+    // Format today's date for new column name
+    useEffect(() => {
+        if (isAddingColumn && !newColumnName) {
+            const now = new Date()
+            const day = String(now.getDate()).padStart(2, '0')
+            const month = String(now.getMonth() + 1).padStart(2, '0')
+            setNewColumnName(`${day}/${month}`)
+        }
+    }, [isAddingColumn])
 
     // Extract unique categories from grades, plus any manually added columns and suggested
     useEffect(() => {
         const existingCategories = Array.from(new Set(grades.map(g => g.category)))
+        const suggestedTitles = (suggestedColumns || []).map(s => s.title)
+
         setColumns(prev => {
-            const merged = new Set([...prev, ...existingCategories, ...(suggestedColumns || [])])
-            return Array.from(merged)
+            const merged = new Set([...prev, ...existingCategories, ...suggestedTitles])
+            // Only keep columns that are not in hiddenColumns
+            return Array.from(merged).filter(c => !hiddenColumns.includes(c))
         })
-    }, [grades, suggestedColumns])
+    }, [grades, suggestedColumns, hiddenColumns])
 
     // Helpers to get/set cell values
     const getGradeForCell = (studentId: string, category: string) => {
@@ -61,7 +97,9 @@ export function GradesSpreadsheet({
         }
 
         const value = parseFloat(str)
-        if (isNaN(value) || value < 1 || value > 10) {
+        const isQualitative = existingGrade?.is_qualitative ?? (columnTypes[category] === 'qualitative')
+
+        if (!isQualitative && (isNaN(value) || value < 1 || value > 10)) {
             toast.error('La calificación debe ser un número entre 1 y 10')
             return
         }
@@ -77,22 +115,81 @@ export function GradesSpreadsheet({
             course_id: courseId,
             period: period,
             category: category,
-            value: value
-        })
+            value: value,
+            is_qualitative: isQualitative
+        } as any) // Type cast because we haven't updated the generated types yet
     }
 
-    const handleAddColumn = (e: React.FormEvent) => {
-        e.preventDefault()
+    const saveNewColumn = () => {
         const name = newColumnName.trim()
-        if (!name) return
+        if (!name) {
+            setIsAddingColumn(false)
+            return
+        }
 
         const isDistinct = !columns.some(c => c.toLowerCase() === name.toLowerCase())
         if (isDistinct) {
             setColumns([...columns, name])
+            setColumnTypes(prev => ({
+                ...prev,
+                [name]: isQualitativeMode ? 'qualitative' : 'numeric'
+            }))
             setNewColumnName('')
             setIsAddingColumn(false)
+            // If it was hidden, unhide it
+            if (hiddenColumns.includes(name)) {
+                setHiddenColumns(prev => prev.filter(c => c !== name))
+            }
         } else {
             toast.error('Ya existe una columna con ese nombre')
+            setIsAddingColumn(false)
+        }
+    }
+
+    const handleAddColumn = (e: React.FormEvent) => {
+        e.preventDefault()
+        saveNewColumn()
+    }
+
+    const handleDeleteColumn = async (category: string) => {
+        const studentGradesInColumn = grades.filter(g => g.category === category)
+        const hasData = studentGradesInColumn.length > 0
+
+        if (hasData) {
+            setColumnToDelete(category)
+            return
+        }
+
+        // If no data, just hide it
+        setHiddenColumns(prev => [...prev, category])
+        toast.success(`Columna "${category}" eliminada`)
+    }
+
+    const confirmDeleteColumn = async () => {
+        if (!columnToDelete) return
+
+        setIsDeletingLoading(true)
+        try {
+            // 1. Delete grades for this category
+            const success = await onDeleteCategory(columnToDelete)
+
+            if (success) {
+                // 2. If it's an assignment and user wants to delete it too
+                const assignment = suggestedColumns?.find(s => s.title === columnToDelete)
+                if (assignment && deleteAssignmentToo && onDeleteAssignment) {
+                    await onDeleteAssignment(assignment.id)
+                }
+
+                setHiddenColumns(prev => [...prev, columnToDelete])
+                toast.success(`Columna "${columnToDelete}" y sus calificaciones eliminadas`)
+            }
+        } catch (error) {
+            console.error('Error deleting column:', error)
+            toast.error('Error al eliminar la columna')
+        } finally {
+            setIsDeletingLoading(false)
+            setColumnToDelete(null)
+            setDeleteAssignmentToo(false)
         }
     }
 
@@ -151,27 +248,65 @@ export function GradesSpreadsheet({
                             {columns.map(col => (
                                 <th
                                     key={col}
-                                    className="px-3 py-3.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em] text-center truncate border-l border-slate-200/70 dark:border-slate-700/50"
+                                    className="group/header px-3 py-3.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.08em] text-center truncate border-l border-slate-200/70 dark:border-slate-700/50 relative"
                                     title={col}
                                 >
-                                    {col}
+                                    <div className="flex items-center justify-center gap-1.5">
+                                        <span className="truncate">{col}</span>
+                                        <button
+                                            onClick={() => handleDeleteColumn(col)}
+                                            className="opacity-0 group-hover/header:opacity-100 p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md transition-all"
+                                            title="Eliminar columna"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </button>
+                                    </div>
                                 </th>
                             ))}
 
                             <th className="px-3 py-3.5 border-l border-slate-200/70 dark:border-slate-700/50">
                                 {isAddingColumn ? (
-                                    <form onSubmit={handleAddColumn} className="flex items-center gap-1">
+                                    <form onSubmit={handleAddColumn} className="flex flex-col gap-2 p-1.5 bg-primary-50/50 dark:bg-primary-950/20 rounded-lg">
                                         <input
                                             type="text"
                                             autoFocus
                                             placeholder="Nombre..."
                                             value={newColumnName}
                                             onChange={e => setNewColumnName(e.target.value)}
-                                            onBlur={() => {
-                                                if (!newColumnName.trim()) setIsAddingColumn(false)
+                                            onBlur={(e) => {
+                                                // Small delay to allow clicking the toggle buttons
+                                                setTimeout(() => {
+                                                    if (document.activeElement?.tagName !== 'BUTTON') {
+                                                        saveNewColumn()
+                                                    }
+                                                }, 150)
                                             }}
-                                            className="w-full px-2 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                                            className="w-full px-2 py-1 text-xs bg-white dark:bg-slate-900 border border-primary-200 dark:border-primary-800 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all shadow-sm"
                                         />
+                                        <div className="flex items-center gap-1.5 p-0.5 bg-white/50 dark:bg-slate-900/50 rounded-md border border-slate-200 dark:border-slate-800">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsQualitativeMode(false)}
+                                                onMouseDown={(e) => e.preventDefault()} // Prevent blur
+                                                className={cn(
+                                                    "flex-1 text-[10px] py-1 rounded transition-all",
+                                                    !isQualitativeMode ? "bg-primary-600 text-white font-bold shadow-sm" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                )}
+                                            >
+                                                1 - 10
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsQualitativeMode(true)}
+                                                onMouseDown={(e) => e.preventDefault()} // Prevent blur
+                                                className={cn(
+                                                    "flex-1 text-[10px] py-1 rounded transition-all",
+                                                    isQualitativeMode ? "bg-primary-600 text-white font-bold shadow-sm" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                )}
+                                            >
+                                                Concepto
+                                            </button>
+                                        </div>
                                     </form>
                                 ) : (
                                     <button
@@ -241,10 +376,27 @@ export function GradesSpreadsheet({
                                     {/* Grade Cells */}
                                     {columns.map(col => {
                                         const grade = getGradeForCell(student.id, col)
+                                        
+                                        // Determine type: 
+                                        // 1. From existing grade record
+                                        // 2. From local column settings
+                                        // 3. Default to numeric (or current mode if it's the one being added)
+                                        let isQualitative = false
+                                        if (grade) {
+                                            isQualitative = !!grade.is_qualitative
+                                        } else if (columnTypes[col]) {
+                                            isQualitative = columnTypes[col] === 'qualitative'
+                                        }
+
                                         return (
-                                            <td key={col} className="p-0 border-l border-slate-100 dark:border-slate-800/60">
+                                            <td 
+                                                key={col} 
+                                                className="p-0 border-l border-slate-100 dark:border-slate-800/60 relative group/cell" 
+                                                title={grade?.observations || undefined}
+                                            >
                                                 <GradeInput
                                                     initialValue={grade ? String(grade.value) : ''}
+                                                    isQualitative={isQualitative}
                                                     onSave={(val) => handleCellBlur(student.id, col, val)}
                                                 />
                                             </td>
@@ -259,12 +411,86 @@ export function GradesSpreadsheet({
                     </tbody>
                 </table>
             </div>
+
+            {/* ── Confirmation Modal ── */}
+            <Modal
+                isOpen={!!columnToDelete}
+                onClose={() => {
+                    if (!isDeletingLoading) {
+                        setColumnToDelete(null)
+                        setDeleteAssignmentToo(false)
+                    }
+                }}
+                title="Eliminar Columna"
+            >
+                <div className="space-y-4">
+                    <div className="flex items-start gap-4 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                                Advertencia: Esta columna tiene datos registrados
+                            </p>
+                            <p className="text-xs text-amber-700/80 dark:text-amber-300/60 mt-1">
+                                Si eliminas la columna "{columnToDelete}", se borrarán permanentemente las {grades.filter(g => g.category === columnToDelete).length} calificaciones asociadas para todos los alumnos en este periodo.
+                            </p>
+                        </div>
+                    </div>
+
+                    {suggestedColumns?.some(s => s.title === columnToDelete) && (
+                        <div className="flex items-center gap-3 p-3 bg-surface-secondary/50 rounded-xl border border-border/50">
+                            <input
+                                type="checkbox"
+                                id="deleteAssignmentToo"
+                                checked={deleteAssignmentToo}
+                                onChange={(e) => setDeleteAssignmentToo(e.target.checked)}
+                                className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            />
+                            <label htmlFor="deleteAssignmentToo" className="text-sm text-text-secondary cursor-pointer select-none">
+                                Eliminar también el Trabajo Práctico vinculado
+                            </label>
+                        </div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-3 pt-2">
+                        <button
+                            onClick={() => {
+                                setColumnToDelete(null)
+                                setDeleteAssignmentToo(false)
+                            }}
+                            disabled={isDeletingLoading}
+                            className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-hover rounded-xl transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={confirmDeleteColumn}
+                            disabled={isDeletingLoading}
+                            className="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-sm transition-all flex items-center gap-2"
+                        >
+                            {isDeletingLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Trash2 className="w-4 h-4" />
+                            )}
+                            Eliminar definitivamente
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     )
 }
 
 // ── Isolated GradeInput for performance ──
-function GradeInput({ initialValue, onSave }: { initialValue: string, onSave: (val: string) => void }) {
+function GradeInput({
+    initialValue,
+    isQualitative,
+    onSave
+}: {
+    initialValue: string,
+    isQualitative: boolean,
+    onSave: (val: string) => void
+}) {
     const [val, setVal] = useState(initialValue)
 
     useEffect(() => {
@@ -275,6 +501,37 @@ function GradeInput({ initialValue, onSave }: { initialValue: string, onSave: (v
         if (val !== initialValue) {
             onSave(val)
         }
+    }
+
+    if (isQualitative) {
+        const currentGrade = QUALITATIVE_SCALE.find(s => String(s.value) === val)
+
+        return (
+            <div className="grid grid-cols-2 gap-0.5 p-0.5 h-full min-h-[52px]">
+                {QUALITATIVE_SCALE.map((s) => {
+                    const isActive = String(s.value) === val
+                    return (
+                        <button
+                            key={s.value}
+                            onClick={() => {
+                                const newValue = isActive ? '' : String(s.value)
+                                setVal(newValue)
+                                onSave(newValue)
+                            }}
+                            title={s.label}
+                            className={cn(
+                                "flex items-center justify-center text-[9px] font-bold uppercase rounded-sm transition-all duration-150",
+                                isActive
+                                    ? `${s.color} ${s.textColor} ring-1 ring-inset ring-black/10 shadow-inner`
+                                    : "bg-slate-50 dark:bg-slate-900/40 text-slate-400 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            )}
+                        >
+                            {s.short}
+                        </button>
+                    )
+                })}
+            </div>
+        )
     }
 
     const numVal = parseFloat(val)

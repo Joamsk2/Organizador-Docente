@@ -1,19 +1,23 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, Suspense } from 'react'
 import { Plus, Info, Loader2, Search, Filter } from 'lucide-react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { useAssignments, type Assignment } from '@/hooks/use-assignments'
 import { KanbanBoard } from '@/components/assignments/kanban-board'
 import { AssignmentForm, type EvaluationCriterion, type ReferenceMaterial } from '@/components/assignments/assignment-form'
 import { CorrectionWizard } from '@/components/assignments/correction-wizard'
 
-export default function TrabajosCoursePage({ params }: { params: Promise<{ id: string }> }) {
-    const { id: courseId } = use(params)
+function TrabajosCoursePageContent({ courseId }: { courseId: string }) {
     const [isFormOpen, setIsFormOpen] = useState(false)
     const [assignmentToEdit, setAssignmentToEdit] = useState<Assignment | null>(null)
     const [wizardAssignment, setWizardAssignment] = useState<Assignment | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [typeFilter, setTypeFilter] = useState('all')
+    const searchParams = useSearchParams()
+    const router = useRouter()
+    const pathname = usePathname()
+    const sessionId = searchParams.get('session_id')
 
     const ASSIGNMENT_TYPES = [
         { value: 'all', label: 'Todos los tipos' },
@@ -38,6 +42,14 @@ export default function TrabajosCoursePage({ params }: { params: Promise<{ id: s
     useEffect(() => {
         if (courseId) fetchAssignments()
     }, [courseId, fetchAssignments])
+
+    useEffect(() => {
+        if (sessionId && !isFormOpen && !assignmentToEdit) {
+            setIsFormOpen(true)
+            // Remove the query param so it doesn't trigger again on refresh if they close it
+            // Optional: router.replace(pathname)
+        }
+    }, [sessionId, isFormOpen, assignmentToEdit])
 
     const handleCreate = () => {
         setAssignmentToEdit(null)
@@ -136,7 +148,13 @@ export default function TrabajosCoursePage({ params }: { params: Promise<{ id: s
                     isOpen={isFormOpen}
                     initialData={assignmentToEdit}
                     courseId={courseId}
-                    onClose={() => setIsFormOpen(false)}
+                    initialSessionId={sessionId}
+                    onClose={() => {
+                        setIsFormOpen(false)
+                        if (sessionId) {
+                            router.replace(pathname) // clean up url
+                        }
+                    }}
                     onSubmit={async (data, criteria: EvaluationCriterion[], materials: ReferenceMaterial[]) => {
                         if (assignmentToEdit) {
                             return await updateAssignment(assignmentToEdit.id, data, criteria, materials)
@@ -157,5 +175,15 @@ export default function TrabajosCoursePage({ params }: { params: Promise<{ id: s
                 />
             )}
         </div>
+    )
+}
+
+export default function TrabajosCoursePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id: courseId } = use(params)
+    
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-text-secondary">Cargando tablero...</div>}>
+            <TrabajosCoursePageContent courseId={courseId} />
+        </Suspense>
     )
 }

@@ -97,6 +97,7 @@ export function useStudentProfile(studentId: string, courseId: string) {
                 .from('assignments')
                 .select('id', { count: 'exact', head: true })
                 .eq('course_id', courseId)
+                .in('status', ['asignado', 'entregado'])
 
             // --- COMPUTING METRICS ---
 

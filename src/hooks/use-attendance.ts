@@ -37,8 +37,43 @@ export function useAttendance(courseId: string | null, date: string | null) {
         }
     }, [courseId, date, supabase])
 
+    const ensureSessionExists = async () => {
+        if (!courseId || !date) return null
+
+        try {
+            const { data: session } = await supabase
+                .from('class_sessions')
+                .select('id')
+                .eq('course_id', courseId)
+                .eq('date', date)
+                .maybeSingle()
+
+            if (!session) {
+                const { data: newSession, error } = await supabase
+                    .from('class_sessions')
+                    .insert({
+                        course_id: courseId,
+                        date: date,
+                        topic: 'Clase registrada'
+                    })
+                    .select('id')
+                    .single()
+                
+                if (error) throw error
+                return newSession?.id
+            }
+            return session.id
+        } catch (error) {
+            console.error('Error ensuring session exists:', error)
+            return null
+        }
+    }
+
     const saveAttendance = async (studentId: string, status: AttendanceStatus, notes?: string) => {
         if (!courseId || !date) return false
+
+        // Ensure session exists first
+        await ensureSessionExists()
 
         // Find existing record for this student/course/date
         const existing = attendance.find(a => a.student_id === studentId)
@@ -131,6 +166,9 @@ export function useAttendance(courseId: string | null, date: string | null) {
 
         setLoading(true)
         try {
+            // Ensure session exists once for the whole batch
+            await ensureSessionExists()
+
             for (const studentId of studentIds) {
                 const hasAttendance = attendance.some(a => a.student_id === studentId)
                 if (!hasAttendance) {

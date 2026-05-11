@@ -48,7 +48,7 @@ export default function DashboardLayout({
 
             <div className="lg:pl-[260px] flex flex-col h-screen overflow-hidden">
                 <Topbar onMobileMenuToggle={() => setMobileNavOpen(!mobileNavOpen)} />
-                <main className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar p-4 lg:p-6">
+                <main className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 lg:p-6">
                     <PageTransition>
                         {children}
                     </PageTransition>

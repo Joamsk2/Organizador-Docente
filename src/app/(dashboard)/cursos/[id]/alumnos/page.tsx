@@ -38,8 +38,7 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
 
     const filteredStudents = students.filter(s => {
         const fullName = `${s.first_name} ${s.last_name}`.toLowerCase()
-        return fullName.includes(searchQuery.toLowerCase()) ||
-            (s.dni && s.dni.includes(searchQuery))
+        return fullName.includes(searchQuery.toLowerCase())
     })
 
     const isLoading = loadingStudents
@@ -76,7 +75,7 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                     <input
                         type="text"
-                        placeholder="Buscar por nombre, apellido o DNI..."
+                        placeholder="Buscar por nombre o apellido..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 bg-surface-secondary border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
@@ -118,8 +117,6 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
                                 <thead className="sticky top-0 z-10 bg-surface">
                                     <tr className="bg-surface-secondary/95 backdrop-blur-sm border-b border-border shadow-sm">
                                         <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Alumno</th>
-                                        <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Contacto</th>
-                                        <th className="px-6 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider hidden md:table-cell">DNI</th>
                                         <th className="px-6 py-4 text-right text-xs font-semibold text-text-secondary uppercase tracking-wider">Acciones</th>
                                     </tr>
                                 </thead>
@@ -131,26 +128,6 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
                                                     {student.last_name}, {student.first_name}
                                                 </Link>
                                                 {student.notes && <div className="text-xs text-text-muted mt-0.5 truncate max-w-[200px]" title={student.notes}>{student.notes}</div>}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex flex-col gap-1 text-sm text-text-secondary">
-                                                    {student.email && (
-                                                        <div className="flex items-center gap-1.5 hover:text-primary-600 transition-colors">
-                                                            <Mail className="w-3.5 h-3.5" />
-                                                            <a href={`mailto:${student.email}`}>{student.email}</a>
-                                                        </div>
-                                                    )}
-                                                    {student.phone && (
-                                                        <div className="flex items-center gap-1.5 hover:text-primary-600 transition-colors">
-                                                            <Phone className="w-3.5 h-3.5" />
-                                                            <a href={`tel:${student.phone}`}>{student.phone}</a>
-                                                        </div>
-                                                    )}
-                                                    {!student.email && !student.phone && <span className="text-text-muted italic text-xs">Sin contacto</span>}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary hidden md:table-cell">
-                                                {student.dni || <span className="text-text-muted italic">—</span>}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right">
                                                 <div className="flex items-center justify-end gap-2">

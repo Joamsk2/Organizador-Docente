@@ -13,13 +13,33 @@ import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { toast } from 'sonner'
 
-function getAcademicBadge(average: number, deliveryRate: number, attendancePercentage: number) {
+function getAcademicBadge(average: number, deliveryRate: number, attendancePercentage: number, hasGrades: boolean, hasAttendance: boolean, hasAssignments: boolean, attendanceStatsTotal: number) {
+    // Thresholds
+    const MIN_GRADE = 7.0
+    const MIN_DELIVERY = 60
+    const MIN_ATTENDANCE = 65
+
+    const isFailingGrades = hasGrades && average < MIN_GRADE
+    const isFailingDelivery = hasAssignments && deliveryRate < MIN_DELIVERY
+    const isFailingAttendance = hasAttendance && attendanceStatsTotal >= 3 && attendancePercentage < MIN_ATTENDANCE
+
+    const reasons: string[] = []
+    if (isFailingGrades) reasons.push('Promedio')
+    if (isFailingDelivery) reasons.push('Entregas')
+    if (isFailingAttendance) reasons.push('Asistencia')
+
+    if (reasons.length > 0) {
+        return { 
+            label: `En Riesgo (${reasons.join(', ')})`, 
+            color: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:border-red-800/50 dark:text-red-400', 
+            icon: AlertTriangle 
+        }
+    }
+    
     if (average >= 8 && deliveryRate >= 80 && attendancePercentage >= 80) {
         return { label: 'Excelente', color: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800/50 dark:text-emerald-400', icon: Award }
     }
-    if (average < 6 || deliveryRate < 50 || attendancePercentage < 60) {
-        return { label: 'En Riesgo', color: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:border-red-800/50 dark:text-red-400', icon: AlertTriangle }
-    }
+
     return { label: 'Regular', color: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800/50 dark:text-blue-400', icon: CheckCircle2 }
 }
 
@@ -53,7 +73,15 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
     const { student, attendanceStats, gradesStats, assignmentStats } = profile
 
     // Determine Status
-    const badge = getAcademicBadge(gradesStats.average, assignmentStats.deliveryRate, attendanceStats.percentage)
+    const badge = getAcademicBadge(
+        gradesStats.average, 
+        assignmentStats.deliveryRate, 
+        attendanceStats.percentage,
+        gradesStats.recentGrades.length > 0,
+        attendanceStats.total > 0,
+        assignmentStats.totalAssigned > 0,
+        attendanceStats.total
+    )
     const BadgeIcon = badge.icon
 
     // Chart Data

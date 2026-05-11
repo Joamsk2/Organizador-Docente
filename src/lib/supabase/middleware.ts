@@ -29,30 +29,25 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
+    // Important: Always use getUser() instead of getSession() in middleware
+    // to ensure the session is valid and for better security.
     const {
-        data: { session },
-    } = await supabase.auth.getSession()
+        data: { user },
+    } = await supabase.auth.getUser()
 
-    const user = session?.user
+    const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
+                       request.nextUrl.pathname.startsWith('/register') ||
+                       request.nextUrl.pathname.startsWith('/auth')
 
-    // Redirect unauthenticated users to login (except auth pages)
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/login') &&
-        !request.nextUrl.pathname.startsWith('/register') &&
-        !request.nextUrl.pathname.startsWith('/auth')
-    ) {
+    // Redirect unauthenticated users to login
+    if (!user && !isAuthPage) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
     }
 
     // Redirect authenticated users away from auth pages
-    if (
-        user &&
-        (request.nextUrl.pathname.startsWith('/login') ||
-            request.nextUrl.pathname.startsWith('/register'))
-    ) {
+    if (user && isAuthPage) {
         const url = request.nextUrl.clone()
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)

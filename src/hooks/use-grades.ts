@@ -53,7 +53,11 @@ export function useGrades(courseId: string | null, period: Database['public']['E
             // Update
             const { data, error } = await supabase
                 .from('grades')
-                .update({ value: gradeData.value, observations: gradeData.observations })
+                .update({ 
+                    value: gradeData.value, 
+                    observations: gradeData.observations,
+                    is_qualitative: (gradeData as any).is_qualitative 
+                })
                 .eq('id', existingGrade.id)
                 .select()
                 .single()
@@ -89,6 +93,41 @@ export function useGrades(courseId: string | null, period: Database['public']['E
                     return [...prev, resultData!]
                 }
             })
+
+            // Reverse sync: Update student_daily_records if it's a daily performance grade
+            if (resultData.category.startsWith('Desempeño ')) {
+                const GRADE_TO_PERFORMANCE: Record<number, string> = {
+                    10: 'excelente',
+                    8: 'bien',
+                    7: 'regular',
+                    4: 'mal'
+                }
+                const performanceValue = GRADE_TO_PERFORMANCE[resultData.value] || 'bien'
+                
+                // Extract date from observations "Clase YYYY-MM-DD - ..."
+                const match = resultData.observations?.match(/Clase (\d{4}-\d{2}-\d{2})/)
+                if (match && match[1]) {
+                    const classDate = match[1]
+                    
+                    // Find class session
+                    supabase
+                        .from('class_sessions')
+                        .select('id')
+                        .eq('course_id', resultData.course_id)
+                        .eq('date', classDate)
+                        .single()
+                        .then(({ data: session }) => {
+                            if (session) {
+                                supabase
+                                    .from('student_daily_records')
+                                    .update({ performance_score: performanceValue as any })
+                                    .eq('session_id', session.id)
+                                    .eq('student_id', resultData.student_id)
+                                    .then() // Fire and forget
+                            }
+                        })
+                }
+            }
         }
 
         return resultData
@@ -110,6 +149,26 @@ export function useGrades(courseId: string | null, period: Database['public']['E
         return true
     }
 
+    const deleteCategory = async (category: string) => {
+        if (!courseId || !period) return false
+
+        const supabase = createClient()
+        const { error } = await supabase
+            .from('grades')
+            .delete()
+            .eq('course_id', courseId)
+            .eq('period', period)
+            .eq('category', category)
+
+        if (error) {
+            toast.error('Error al eliminar columna', { description: error.message })
+            return false
+        }
+
+        setGrades(prev => prev.filter(g => g.category !== category))
+        return true
+    }
+
     return {
         grades,
         setGrades, // Exported to allow optimistic updates from outside if needed
@@ -117,5 +176,6 @@ export function useGrades(courseId: string | null, period: Database['public']['E
         fetchGrades,
         saveGrade,
         deleteGrade,
+        deleteCategory
     }
 }

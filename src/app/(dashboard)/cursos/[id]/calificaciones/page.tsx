@@ -16,8 +16,8 @@ export default function CalificacionesCoursePage({ params }: { params: Promise<{
     const [selectedPeriod, setSelectedPeriod] = useState<GradePeriod>('1er_trimestre')
 
     const { students, loading: loadingStudents, fetchStudents } = useStudents(courseId)
-    const { grades, loading: loadingGrades, fetchGrades, saveGrade, deleteGrade } = useGrades(courseId, selectedPeriod)
-    const { assignments, loading: loadingAssignments, fetchAssignments } = useAssignments(courseId)
+    const { grades, loading: loadingGrades, fetchGrades, saveGrade, deleteGrade, deleteCategory } = useGrades(courseId, selectedPeriod)
+    const { assignments, loading: loadingAssignments, fetchAssignments, deleteAssignment } = useAssignments(courseId)
 
     useEffect(() => {
         if (courseId) {
@@ -80,10 +80,12 @@ export default function CalificacionesCoursePage({ params }: { params: Promise<{
                                 period={selectedPeriod}
                                 students={students}
                                 grades={grades}
-                                suggestedColumns={assignments.map(a => a.title)}
+                                suggestedColumns={assignments.map(a => ({ id: a.id, title: a.title }))}
                                 loading={loadingGrades || loadingStudents || loadingAssignments}
                                 onSaveGrade={saveGrade}
                                 onDeleteGrade={deleteGrade}
+                                onDeleteCategory={deleteCategory}
+                                onDeleteAssignment={deleteAssignment}
                             />
                         </div>
                     </div>

@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import {
     X, ChevronLeft, Upload, Loader2, CheckCircle2, Clock,
-    AlertCircle, BookOpen, Star, ChevronRight, Users
+    AlertCircle, BookOpen, Star, ChevronRight, Users, RefreshCw, FileText
 } from 'lucide-react'
 import type { Assignment } from '@/hooks/use-assignments'
 import { useCorrectionWizard, type CorrectionResult } from '@/hooks/use-correction-wizard'
@@ -19,6 +19,12 @@ const GRADE_PERIODS: { value: GradePeriod; label: string }[] = [
     { value: '3er_trimestre', label: '3er Trimestre' },
     { value: 'final', label: 'Final' },
 ]
+
+const severityColor: Record<string, string> = {
+    high: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
+    medium: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+    low: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+}
 
 type WizardStep =
     | 'select_student'
@@ -65,6 +71,7 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
 
     const selectedStudent = submissionStatuses.find(s => s.studentId === selectedStudentId)
 
+    const readyToCorrectCount = submissionStatuses.filter(s => s.status === 'cargado' || s.status === 'corregido').length
     const uploadedCount = submissionStatuses.filter(s => s.status === 'cargado').length
     const correctedCount = submissionStatuses.filter(s => s.status === 'corregido' || s.status === 'aprobado').length
     const approvedCount = submissionStatuses.filter(s => s.status === 'aprobado').length
@@ -121,7 +128,21 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
         setFinalGrade(result.suggestedGrade)
         setEditedFeedback(result.studentFeedback)
         setTeacherNotes('')
+        setSelectedStudentId(studentId) // Ensure selectedStudentId is set for re-correction
         setStep('review_single')
+    }
+
+    const handleReCorrectSingle = async () => {
+        if (!selectedStudentId) return
+        setStep('correcting')
+        const ok = await runBatchCorrection([selectedStudentId])
+        if (ok) {
+            // After re-correction, find the new correction ID and open it
+            // We need to fetch statuses first (runBatchCorrection already does it)
+            setStep('review_list')
+        } else {
+            setStep('review_list')
+        }
     }
 
     const handleSaveApproval = async () => {
@@ -157,7 +178,7 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
             {/* Panel */}
-            <div className="relative ml-auto w-full max-w-lg h-full bg-background border-l border-border shadow-2xl flex flex-col overflow-hidden">
+            <div className="relative ml-auto w-full max-w-lg h-full bg-surface/95 dark:bg-surface/80 backdrop-blur-xl border-l border-white/10 shadow-2xl flex flex-col overflow-hidden animate-slide-in-right">
 
                 {/* Header */}
                 <div className="flex items-center gap-3 px-5 py-4 border-b border-border flex-shrink-0">
@@ -194,22 +215,22 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
                     {step === 'select_student' && (
                         <div className="p-5 space-y-4">
                             {/* Summary pills */}
-                            <div className="flex gap-2 flex-wrap">
-                                <span className="px-3 py-1 bg-surface-secondary rounded-full text-xs text-text-secondary">
+                            <div className="flex gap-2 flex-wrap animate-fade-in">
+                                <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold text-text-secondary uppercase tracking-wider">
                                     {submissionStatuses.length} alumnos
                                 </span>
                                 {uploadedCount > 0 && (
-                                    <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-xs">
+                                    <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-[10px] font-bold uppercase tracking-wider">
                                         {uploadedCount} cargados
                                     </span>
                                 )}
                                 {correctedCount > 0 && (
-                                    <span className="px-3 py-1 bg-amber-500/10 text-amber-400 rounded-full text-xs">
+                                    <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-full text-[10px] font-bold uppercase tracking-wider">
                                         {correctedCount} corregidos
                                     </span>
                                 )}
                                 {approvedCount > 0 && (
-                                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs">
+                                    <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-bold uppercase tracking-wider">
                                         {approvedCount} aprobados
                                     </span>
                                 )}
@@ -220,49 +241,59 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
                                     <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
                                 </div>
                             ) : (
-                                <div className="space-y-2">
-                                    {submissionStatuses.map(s => (
+                                <div className="space-y-3 animate-fade-in">
+                                    {submissionStatuses.map((s, idx) => (
                                         <button
                                             key={s.studentId}
                                             onClick={() => handleSelectStudent(s.studentId)}
                                             disabled={s.status === 'aprobado'}
+                                            style={{ animationDelay: `${idx * 40}ms` }}
                                             className={cn(
-                                                "w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all",
+                                                "w-full flex items-center gap-4 p-4 rounded-2xl border text-left transition-all group animate-fade-in",
                                                 s.status === 'aprobado'
-                                                    ? 'bg-emerald-500/5 border-emerald-500/20 cursor-default'
+                                                    ? 'bg-emerald-500/5 border-emerald-500/10 cursor-default opacity-70'
                                                     : s.status === 'corregido'
-                                                        ? 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10'
+                                                        ? 'bg-amber-500/5 border-amber-500/20 hover:border-amber-400 hover:bg-amber-500/10 shadow-lg shadow-amber-500/5'
                                                         : s.status === 'cargado'
-                                                            ? 'bg-blue-500/5 border-blue-500/20 hover:bg-blue-500/10'
-                                                            : 'bg-surface border-border hover:border-primary-400 hover:bg-primary-500/5'
+                                                            ? 'bg-blue-500/5 border-blue-500/20 hover:border-blue-400 hover:bg-blue-500/10'
+                                                            : 'bg-surface-secondary/50 border-white/5 hover:border-primary-500/50 hover:bg-primary-500/5'
                                             )}
                                         >
                                             {/* Avatar */}
                                             <div className={cn(
-                                                "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0",
-                                                s.status === 'aprobado' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                    s.status === 'corregido' ? 'bg-amber-500/20 text-amber-400' :
-                                                        s.status === 'cargado' ? 'bg-blue-500/20 text-blue-400' :
-                                                            'bg-surface-secondary text-text-muted'
+                                                "w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 transition-transform group-hover:scale-110 shadow-inner",
+                                                s.status === 'aprobado' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' :
+                                                    s.status === 'corregido' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/20' :
+                                                        s.status === 'cargado' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/20' :
+                                                            'bg-surface-secondary text-text-muted border border-white/10'
                                             )}>
                                                 {s.studentName.charAt(0).toUpperCase()}
                                             </div>
-
+ 
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-text-primary truncate">{s.studentName}</p>
-                                                <p className="text-xs text-text-muted">
+                                                <div className="flex items-center justify-between mb-0.5">
+                                                    <p className="text-sm font-semibold text-text-primary truncate">{s.studentName}</p>
+                                                    {s.status === 'corregido' && (
+                                                        <span className="text-[10px] font-black px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/20 uppercase tracking-tighter">
+                                                            Sugerido
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] leading-tight text-text-muted font-medium">
                                                     {s.status === 'pendiente' && 'Sin trabajo cargado'}
-                                                    {s.status === 'cargado' && 'Trabajo cargado — listo para corregir'}
-                                                    {s.status === 'corregido' && `IA sugiere nota ${s.suggestedGrade} — clic para revisar`}
+                                                    {s.status === 'cargado' && 'Trabajo cargado • Listo para corregir'}
+                                                    {s.status === 'corregido' && `IA sugiere nota ${s.suggestedGrade} • Clic para revisar`}
                                                     {s.status === 'aprobado' && `Nota aprobada: ${s.suggestedGrade}`}
                                                 </p>
                                             </div>
-
+ 
                                             {/* Status icon */}
-                                            {s.status === 'aprobado' && <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />}
-                                            {s.status === 'corregido' && <Star className="w-5 h-5 text-amber-400 flex-shrink-0" />}
-                                            {s.status === 'cargado' && <Clock className="w-5 h-5 text-blue-400 flex-shrink-0" />}
-                                            {s.status === 'pendiente' && <ChevronRight className="w-4 h-4 text-text-muted flex-shrink-0" />}
+                                            <div className="flex-shrink-0 ml-1">
+                                                {s.status === 'aprobado' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+                                                {s.status === 'corregido' && <Star className="w-5 h-5 text-amber-400 animate-pulse" />}
+                                                {s.status === 'cargado' && <Clock className="w-5 h-5 text-blue-400" />}
+                                                {s.status === 'pendiente' && <ChevronRight className="w-4 h-4 text-text-muted group-hover:translate-x-1 transition-transform" />}
+                                            </div>
                                         </button>
                                     ))}
                                 </div>
@@ -272,10 +303,13 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
 
                     {/* ===== STEP: UPLOAD FILE ===== */}
                     {step === 'upload_file' && (
-                        <div className="p-5 space-y-4">
-                            <p className="text-sm text-text-secondary">
-                                Subí el trabajo de <strong className="text-text-primary">{selectedStudent?.studentName}</strong>. Puede ser una foto del examen, un PDF o un documento Word.
-                            </p>
+                        <div className="p-6 space-y-5 animate-slide-in-right">
+                            <div className="p-4 bg-primary-500/5 border border-primary-500/10 rounded-2xl">
+                                <p className="text-sm text-text-secondary leading-relaxed">
+                                    Subí el trabajo de <strong className="text-text-primary font-bold">{selectedStudent?.studentName}</strong>. 
+                                    La IA procesará imágenes, PDFs o documentos para evaluarlos.
+                                </p>
+                            </div>
 
                             {/* Drop zone */}
                             <div
@@ -328,60 +362,77 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
 
                     {/* ===== STEP: CORRECTING ===== */}
                     {step === 'correcting' && (
-                        <div className="p-5 space-y-4">
-                            <p className="text-sm text-text-secondary text-center pt-4">
-                                La IA está leyendo y evaluando cada trabajo. Esto puede tardar un momento.
-                            </p>
-                            <div className="space-y-2 mt-4">
-                                {submissionStatuses.filter(s => s.status === 'cargado').map(s => (
-                                    <div key={s.studentId} className="flex items-center gap-3 p-3 bg-surface border border-border rounded-xl">
-                                        <div className="w-8 h-8 rounded-full bg-surface-secondary flex items-center justify-center text-sm font-bold text-text-muted">
+                        <div className="p-8 space-y-8 animate-fade-in flex flex-col items-center justify-center h-full">
+                            <div className="relative">
+                                <div className="w-24 h-24 rounded-full border-4 border-primary-500/10 border-t-primary-500 animate-spin" />
+                                <Star className="w-10 h-10 text-primary-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                            </div>
+                            <div className="text-center space-y-2">
+                                <h3 className="text-xl font-bold text-text-primary">Evaluando con IA</h3>
+                                <p className="text-sm text-text-muted max-w-[280px] mx-auto">
+                                    Estamos analizando cada entrega según tus criterios y bibliografía...
+                                </p>
+                            </div>
+                            <div className="w-full space-y-3">
+                                {submissionStatuses.filter(s => s.status === 'cargado' || s.status === 'corregido').slice(0, 4).map((s, i) => (
+                                    <div 
+                                        key={s.studentId} 
+                                        style={{ animationDelay: `${i * 100}ms` }}
+                                        className="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl animate-fade-in opacity-60"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-surface-secondary flex items-center justify-center text-xs font-bold text-text-muted">
                                             {s.studentName.charAt(0)}
                                         </div>
-                                        <span className="flex-1 text-sm text-text-primary">{s.studentName}</span>
-                                        <Loader2 className="w-4 h-4 animate-spin text-primary-400" />
+                                        <span className="flex-1 text-xs text-text-secondary">{s.studentName}</span>
+                                        <Loader2 className="w-3 h-3 animate-spin text-primary-400" />
                                     </div>
                                 ))}
+                                {readyToCorrectCount > 4 && (
+                                    <p className="text-center text-[10px] text-text-muted font-bold tracking-widest uppercase">
+                                        + {readyToCorrectCount - 4} alumnos más
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}
 
                     {/* ===== STEP: REVIEW LIST ===== */}
                     {step === 'review_list' && (
-                        <div className="p-5 space-y-4">
-                            <p className="text-sm text-text-secondary">
+                        <div className="p-5 space-y-4 animate-slide-in-right">
+                            <p className="text-sm text-text-secondary font-medium px-1">
                                 Revisá la corrección de cada alumno antes de guardar la nota.
                             </p>
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 {submissionStatuses
                                     .filter(s => s.status === 'corregido' || s.status === 'aprobado')
-                                    .map(s => (
+                                    .map((s, idx) => (
                                         <button
                                             key={s.studentId}
                                             onClick={() => s.correctionId && handleOpenReview(s.correctionId, s.studentId)}
                                             disabled={s.status === 'aprobado'}
+                                            style={{ animationDelay: `${idx * 40}ms` }}
                                             className={cn(
-                                                "w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all",
+                                                "w-full flex items-center gap-4 p-4 rounded-2xl border text-left transition-all group animate-fade-in",
                                                 s.status === 'aprobado'
-                                                    ? 'bg-emerald-500/5 border-emerald-500/20 cursor-default'
-                                                    : 'bg-surface border-border hover:border-primary-400'
+                                                    ? 'bg-emerald-500/5 border-emerald-500/10 cursor-default opacity-70'
+                                                    : 'bg-amber-500/5 border-amber-500/20 hover:border-amber-400 hover:bg-amber-500/10 shadow-lg shadow-amber-500/5'
                                             )}
                                         >
                                             <div className={cn(
-                                                "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0",
+                                                "w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 transition-transform group-hover:scale-110",
                                                 s.status === 'aprobado' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
                                             )}>
                                                 {s.studentName.charAt(0)}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-text-primary">{s.studentName}</p>
-                                                <p className="text-xs text-text-muted">
-                                                    {s.status === 'aprobado' ? `Nota guardada: ${s.suggestedGrade}` : `Nota sugerida: ${s.suggestedGrade} — Tocá para revisar`}
+                                                <p className="text-sm font-semibold text-text-primary">{s.studentName}</p>
+                                                <p className="text-[11px] font-medium text-text-muted">
+                                                    {s.status === 'aprobado' ? `Nota guardada: ${s.suggestedGrade}` : `IA sugiere nota ${s.suggestedGrade} • Clic para revisar`}
                                                 </p>
                                             </div>
                                             {s.status === 'aprobado'
                                                 ? <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                                                : <ChevronRight className="w-4 h-4 text-text-muted flex-shrink-0" />
+                                                : <ChevronRight className="w-4 h-4 text-text-muted group-hover:translate-x-1 transition-transform flex-shrink-0" />
                                             }
                                         </button>
                                     ))}
@@ -404,26 +455,31 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
                             )}
 
                             {/* Grade */}
-                            <div>
-                                <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Nota Final</label>
-                                <div className="flex items-center gap-3">
-                                    <input
-                                        type="number"
-                                        min={1} max={10} step={0.5}
-                                        value={finalGrade}
-                                        onChange={e => setFinalGrade(Number(e.target.value))}
-                                        className="w-24 text-3xl font-black text-center py-3 bg-surface border-2 border-primary-500 rounded-xl focus:ring-2 focus:ring-primary-500 text-text-primary"
-                                    />
-                                    <div className="text-sm text-text-secondary">
-                                        <p>La IA sugirió <strong className="text-text-primary">{reviewingCorrection.suggestedGrade}</strong></p>
-                                        <p className="text-xs text-text-muted">Podés cambiarlo antes de guardar</p>
+                            <div className="bg-surface-secondary/50 p-5 rounded-2xl border border-white/5 shadow-inner">
+                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">Nota Final</label>
+                                <div className="flex items-center gap-5">
+                                    <div className="relative group">
+                                        <input
+                                            type="number"
+                                            min={1} max={10} step={0.5}
+                                            value={finalGrade}
+                                            onChange={e => setFinalGrade(Number(e.target.value))}
+                                            className="w-24 text-4xl font-black text-center py-4 bg-surface border-2 border-primary-500/30 rounded-2xl focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all text-text-primary shadow-lg"
+                                        />
+                                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center text-white text-[10px] shadow-lg animate-bounce">
+                                            ✏️
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 space-y-1">
+                                        <p className="text-sm font-medium text-text-primary">Sugerencia de IA: <span className="text-amber-400 font-bold">{reviewingCorrection.suggestedGrade}</span></p>
+                                        <p className="text-xs text-text-muted leading-snug">Podés ajustar la nota según tu criterio pedagógico.</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Period selector */}
                             <div>
-                                <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Guardar en</label>
+                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">Guardar en Trimestre / Periodo</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {GRADE_PERIODS.map(p => (
                                         <button
@@ -431,10 +487,10 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
                                             type="button"
                                             onClick={() => setSelectedPeriod(p.value)}
                                             className={cn(
-                                                "py-2 px-3 rounded-lg border text-sm font-medium transition-all",
+                                                "py-2.5 px-3 rounded-xl border text-xs font-bold transition-all uppercase tracking-wider",
                                                 selectedPeriod === p.value
-                                                    ? 'bg-primary-600 border-primary-600 text-white'
-                                                    : 'bg-surface border-border text-text-secondary hover:border-primary-400'
+                                                    ? 'bg-primary-500 border-primary-500 text-white shadow-lg shadow-primary-500/20'
+                                                    : 'bg-white/5 border-white/5 text-text-secondary hover:border-white/10 hover:bg-white/10'
                                             )}
                                         >
                                             {p.label}
@@ -462,38 +518,39 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
 
                             {/* Improvement suggestions */}
                             {reviewingCorrection.improvementSuggestions && (
-                                <div>
-                                    <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">Áreas de mejora</label>
-                                    <p className="text-sm text-text-secondary bg-surface border border-border rounded-xl p-3">
-                                        {reviewingCorrection.improvementSuggestions}
-                                    </p>
+                                <div className="animate-fade-in">
+                                    <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2 px-1">Áreas de mejora</label>
+                                    <div className="text-sm text-text-secondary bg-surface-secondary/30 border border-white/5 rounded-2xl p-4 italic leading-relaxed">
+                                        "{reviewingCorrection.improvementSuggestions}"
+                                    </div>
                                 </div>
                             )}
 
                             {/* Feedback editable */}
                             <div>
-                                <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
-                                    Devolución al alumno <span className="normal-case font-normal">(editable)</span>
+                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2 px-1">
+                                    Devolución al alumno <span className="normal-case font-normal text-primary-400/80">(Editable)</span>
                                 </label>
                                 <textarea
                                     rows={5}
                                     value={editedFeedback}
                                     onChange={e => setEditedFeedback(e.target.value)}
-                                    className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y custom-scrollbar text-text-primary"
+                                    className="w-full px-4 py-3 bg-surface border border-white/10 rounded-2xl text-sm focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all custom-scrollbar text-text-primary placeholder:text-text-muted/50"
+                                    placeholder="Escribí aquí los comentarios para el alumno..."
                                 />
                             </div>
 
                             {/* Teacher notes */}
-                            <div>
-                                <label className="block text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
-                                    Notas del docente <span className="normal-case font-normal">(privadas, no se muestran al alumno)</span>
+                            <div className="pb-4">
+                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2 px-1">
+                                    Notas del docente <span className="normal-case font-normal text-text-muted/50">(Privado)</span>
                                 </label>
                                 <textarea
                                     rows={2}
                                     value={teacherNotes}
                                     onChange={e => setTeacherNotes(e.target.value)}
-                                    placeholder="Observaciones personales sobre esta corrección..."
-                                    className="w-full px-3 py-2 bg-surface border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y custom-scrollbar text-text-primary"
+                                    placeholder="Observaciones personales..."
+                                    className="w-full px-4 py-3 bg-surface border border-white/10 rounded-2xl text-xs focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all custom-scrollbar text-text-primary italic"
                                 />
                             </div>
                         </div>
@@ -501,18 +558,18 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
                 </div>
 
                 {/* Footer actions */}
-                <div className="border-t border-border p-4 flex-shrink-0 space-y-2">
+                <div className="border-t border-white/10 p-5 flex-shrink-0 space-y-3 bg-surface-secondary/50 backdrop-blur-md">
 
                     {/* Select student footer: Correct all button */}
-                    {step === 'select_student' && uploadedCount > 0 && (
+                    {step === 'select_student' && readyToCorrectCount > 0 && (
                         <button
-                            onClick={handleRunCorrection}
+                            onClick={() => handleRunCorrection()}
                             disabled={correcting}
-                            className="w-full py-3 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 disabled:opacity-50 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary-500/20 active:scale-[0.98]"
                         >
                             {correcting
-                                ? <><Loader2 className="w-4 h-4 animate-spin" /> Corrigiendo...</>
-                                : <><Star className="w-4 h-4" /> Corregir con IA ({uploadedCount} {uploadedCount === 1 ? 'trabajo' : 'trabajos'})</>
+                                ? <><Loader2 className="w-5 h-5 animate-spin" /> Procesando...</>
+                                : <><Star className="w-5 h-5 fill-current" /> {uploadedCount > 0 ? 'Corregir con IA' : 'Re-corregir con IA'} ({readyToCorrectCount})</>
                             }
                         </button>
                     )}
@@ -521,7 +578,7 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
                     {step === 'review_list' && (
                         <button
                             onClick={() => setStep('select_student')}
-                            className="w-full py-2.5 border border-border text-text-secondary hover:bg-surface-hover text-sm font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-3.5 border border-white/10 text-text-secondary hover:bg-white/5 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center gap-2"
                         >
                             <Users className="w-4 h-4" /> Cargar más trabajos
                         </button>
@@ -529,16 +586,26 @@ export function CorrectionWizard({ assignment, courseId, onClose }: CorrectionWi
 
                     {/* Review single footer: save */}
                     {step === 'review_single' && (
-                        <button
-                            onClick={handleSaveApproval}
-                            disabled={savingApproval || !selectedStudent?.submissionId}
-                            className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
-                        >
-                            {savingApproval
-                                ? <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</>
-                                : <><CheckCircle2 className="w-4 h-4" /> Guardar corrección</>
-                            }
-                        </button>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={handleSaveApproval}
+                                disabled={savingApproval || !selectedStudent?.submissionId}
+                                className="w-full py-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 disabled:opacity-50 text-white font-bold rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 active:scale-[0.98]"
+                            >
+                                {savingApproval
+                                    ? <><Loader2 className="w-5 h-5 animate-spin" /> Guardando...</>
+                                    : <><CheckCircle2 className="w-5 h-5" /> Aprobar y Guardar Nota</>
+                                }
+                            </button>
+                            
+                            <button
+                                onClick={handleReCorrectSingle}
+                                disabled={savingApproval || correcting}
+                                className="w-full py-3 border border-amber-500/30 text-amber-400 hover:bg-amber-500/5 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all flex items-center justify-center gap-2"
+                            >
+                                <RefreshCw className={cn("w-3 h-3", correcting && "animate-spin")} /> Re-corregir con IA
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

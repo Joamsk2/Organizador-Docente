@@ -35,7 +35,7 @@ export function useCorrectionWizard(assignmentId: string, courseId: string) {
     const [correctionResults, setCorrectionResults] = useState<CorrectionResult[]>([])
     const [loadingStatus, setLoadingStatus] = useState(false)
     const [uploadingFor, setUploadingFor] = useState<string | null>(null) // studentId being uploaded
-    const [correcting, setCorreting] = useState(false)
+    const [correcting, setCorrecting] = useState(false)
     const [correctionProgress, setCorrectionProgress] = useState<Record<string, 'pending' | 'processing' | 'done' | 'error'>>({})
 
     /**
@@ -81,7 +81,7 @@ export function useCorrectionWizard(assignmentId: string, courseId: string) {
                 : null
 
             let status: StudentSubmissionStatus['status'] = 'pendiente'
-            if (correction?.status === 'approved') status = 'aprobado'
+            if (correction?.status === 'approved_by_teacher') status = 'aprobado'
             else if (correction) status = 'corregido'
             else if (submission) status = 'cargado'
 
@@ -167,17 +167,21 @@ export function useCorrectionWizard(assignmentId: string, courseId: string) {
     }
 
     /**
-     * Runs batch AI correction for all uploaded (but not yet corrected) submissions.
+     * Runs batch AI correction for uploaded submissions.
+     * @param targetStudentIds Optional list of student IDs to correct specifically. If omitted, corrects all pending.
      */
-    const runBatchCorrection = async (): Promise<boolean> => {
-        setCorreting(true)
+    const runBatchCorrection = async (targetStudentIds?: string[]): Promise<boolean> => {
+        setCorrecting(true)
 
-        // Get IDs of students that have uploaded work but not been corrected yet
-        const toCorrect = submissionStatuses.filter(s => s.status === 'cargado')
+        // If targetStudentIds is provided, filter by those. 
+        // Otherwise, pick everything that is 'cargado' OR 'corregido' (not approved yet)
+        const toCorrect = targetStudentIds 
+            ? submissionStatuses.filter(s => targetStudentIds.includes(s.studentId))
+            : submissionStatuses.filter(s => s.status === 'cargado' || s.status === 'corregido')
 
         if (toCorrect.length === 0) {
-            toast.error('No hay trabajos cargados para corregir')
-            setCorreting(false)
+            toast.error('No hay trabajos para corregir')
+            setCorrecting(false)
             return false
         }
 
@@ -228,19 +232,27 @@ export function useCorrectionWizard(assignmentId: string, courseId: string) {
 
             }
 
-            // 3. Call the batch correction API with the digest
+            // 3. Call the batch correction API with the digest and optional filters
             const response = await fetch('/api/ai/correct', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     assignment_id: assignmentId,
-                    digest: currentDigest
+                    digest: currentDigest,
+                    student_ids: targetStudentIds // Send specific IDs if requested
                 }),
             })
 
             if (!response.ok) {
-                const err = await response.json()
-                throw new Error(err.error || 'Error en la corrección')
+                let errorMessage = 'Error en la corrección'
+                try {
+                    const err = await response.json()
+                    errorMessage = err.details ? `${err.error}: ${err.details}` : (err.error || errorMessage)
+                } catch (e) {
+                    const rawText = await response.text().catch(() => '')
+                    if (rawText.includes('<html')) errorMessage = `Error del servidor (${response.status})`
+                }
+                throw new Error(errorMessage)
             }
 
             const result = await response.json()
@@ -264,7 +276,7 @@ export function useCorrectionWizard(assignmentId: string, courseId: string) {
             })
             return false
         } finally {
-            setCorreting(false)
+            setCorrecting(false)
         }
     }
 
@@ -338,7 +350,7 @@ export function useCorrectionWizard(assignmentId: string, courseId: string) {
                     teacher_override_grade: finalGrade,
                     student_feedback: editedFeedback,
                     teacher_notes: teacherNotes,
-                    status: 'approved',
+                    status: 'approved_by_teacher',
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', correctionId)

@@ -8,12 +8,13 @@ export function CourseTabs({ courseId }: { courseId: string }) {
     const pathname = usePathname()
 
     const tabs = [
-        { name: 'Resumen', href: `/cursos/${courseId}`, icon: LayoutDashboard, exact: true },
-        { name: 'Alumnos', href: `/cursos/${courseId}/alumnos`, icon: Users },
-        { name: 'Asistencia', href: `/cursos/${courseId}/asistencia`, icon: Clock },
+        { name: 'Dashboard', href: `/cursos/${courseId}`, icon: LayoutDashboard, exact: true },
+        { name: 'Clase de Hoy', href: `/cursos/${courseId}/clase`, icon: Clock },
         { name: 'Calificaciones', href: `/cursos/${courseId}/calificaciones`, icon: FileSpreadsheet },
-        { name: 'Trabajos Prácticos', href: `/cursos/${courseId}/trabajos`, icon: KanbanSquare },
-        { name: 'Planificaciones', href: `/cursos/${courseId}/planificaciones`, icon: Library },
+        { name: 'Trabajos', href: `/cursos/${courseId}/trabajos`, icon: KanbanSquare },
+        { name: 'Bitácora', href: `/cursos/${courseId}/bitacora`, icon: Clock },
+        { name: 'Planificación', href: `/cursos/${courseId}/planificacion`, icon: Library },
+        { name: 'Alumnos', href: `/cursos/${courseId}/alumnos`, icon: Users },
     ]
 
     return (

@@ -22,10 +22,6 @@ export function StudentForm({ isOpen, onClose, onSubmit, initialData, availableC
     const [formData, setFormData] = useState({
         first_name: initialData?.first_name || '',
         last_name: initialData?.last_name || '',
-        dni: initialData?.dni || '',
-        email: initialData?.email || '',
-        phone: initialData?.phone || '',
-        notes: initialData?.notes || '',
     })
 
     // Pre-select courses if editing
@@ -97,45 +93,6 @@ export function StudentForm({ isOpen, onClose, onSubmit, initialData, availableC
                             className="w-full px-3 py-2 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">
-                            DNI
-                        </label>
-                        <input
-                            type="text"
-                            name="dni"
-                            value={formData.dni}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">
-                            Email
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">
-                            Teléfono
-                        </label>
-                        <input
-                            type="text"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        />
-                    </div>
                 </div>
 
                 <div>
@@ -167,19 +124,6 @@ export function StudentForm({ isOpen, onClose, onSubmit, initialData, availableC
                     </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">
-                        Observaciones Adicionales
-                    </label>
-                    <textarea
-                        name="notes"
-                        rows={2}
-                        value={formData.notes}
-                        onChange={handleChange}
-                        placeholder="Alergias, necesidades particulares, etc."
-                        className="w-full px-3 py-2 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                    />
-                </div>
 
                 <div className="pt-4 flex justify-end gap-3 border-t border-border mt-4">
                     <button
