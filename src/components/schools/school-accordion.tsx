@@ -55,32 +55,32 @@ export function SchoolAccordion({
     const schoolStyle = useMemo(() => {
         const name = school.name.toUpperCase()
         if (name.includes('EPET') || name.includes('TECNICA')) return {
-            base: 'from-orange-500/20 to-yellow-600/5',
-            accent: 'text-orange-400',
+            base: 'from-orange-500/20 to-yellow-600/5 dark:from-orange-500/20 dark:to-yellow-600/5',
+            accent: 'text-orange-600 dark:text-orange-400',
             glow: 'shadow-orange-500/10',
-            badge: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-            icon: 'bg-orange-500/20 text-orange-300'
+            badge: 'bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20',
+            icon: 'bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-300'
         }
         if (name.includes('CPEM') || name.includes('SECUNDARIA')) return {
-            base: 'from-violet-500/20 to-blue-600/5',
-            accent: 'text-violet-400',
+            base: 'from-violet-500/20 to-blue-600/5 dark:from-violet-500/20 dark:to-blue-600/5',
+            accent: 'text-violet-600 dark:text-violet-400',
             glow: 'shadow-violet-500/10',
-            badge: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
-            icon: 'bg-violet-500/20 text-violet-300'
+            badge: 'bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/20',
+            icon: 'bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-300'
         }
         if (name.includes('IFD') || name.includes('SUPERIOR')) return {
-            base: 'from-emerald-500/20 to-teal-600/5',
-            accent: 'text-emerald-400',
+            base: 'from-emerald-500/20 to-teal-600/5 dark:from-emerald-500/20 dark:to-teal-600/5',
+            accent: 'text-emerald-600 dark:text-emerald-400',
             glow: 'shadow-emerald-500/10',
-            badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-            icon: 'bg-emerald-500/20 text-emerald-300'
+            badge: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+            icon: 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300'
         }
         return {
-            base: 'from-blue-500/20 to-indigo-600/5',
-            accent: 'text-blue-400',
+            base: 'from-blue-500/20 to-indigo-600/5 dark:from-blue-500/20 dark:to-indigo-600/5',
+            accent: 'text-blue-600 dark:text-blue-400',
             glow: 'shadow-blue-500/10',
-            badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-            icon: 'bg-blue-500/20 text-blue-300'
+            badge: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20',
+            icon: 'bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300'
         }
     }, [school.name])
 
@@ -131,10 +131,10 @@ export function SchoolAccordion({
         <motion.div 
             layout
             className={cn(
-                "group relative flex flex-col rounded-2xl transition-all duration-300 overflow-hidden border border-white/5",
-                "bg-surface-secondary/20 hover:bg-surface-secondary/30",
-                "hover:border-white/20 hover:translate-y-[-2px] hover:shadow-2xl hover:shadow-primary-500/5",
-                isExpanded && "bg-surface-secondary/40 ring-1 ring-white/10"
+                "group relative flex flex-col rounded-2xl transition-all duration-300 overflow-hidden border border-border/50 dark:border-white/5",
+                "bg-surface hover:bg-surface-secondary/50 dark:bg-surface-secondary/20 dark:hover:bg-surface-secondary/30",
+                "hover:border-primary-500/30 dark:hover:border-white/20 hover:translate-y-[-2px] hover:shadow-xl dark:hover:shadow-2xl hover:shadow-primary-500/5",
+                isExpanded && "bg-surface-secondary/10 dark:bg-surface-secondary/40 ring-1 ring-border dark:ring-white/10"
             )}
         >
             {/* Lateral Color Bar */}
@@ -148,7 +148,7 @@ export function SchoolAccordion({
                             {initials}
                         </div>
                         <div className="min-w-0">
-                            <h3 className="text-xl font-bold text-text-primary tracking-tight truncate leading-tight group-hover:text-white transition-colors">
+                            <h3 className="text-xl font-bold text-text-primary tracking-tight truncate leading-tight transition-colors">
                                 {school.name}
                             </h3>
                             <div className="flex items-center gap-2 mt-1 text-[10px] font-bold text-text-secondary uppercase tracking-[0.1em]">
@@ -162,7 +162,7 @@ export function SchoolAccordion({
                     <div className="relative flex-shrink-0">
                         <button
                             onClick={() => setShowOptions(!showOptions)}
-                            className="p-1.5 text-text-muted hover:text-white transition-colors opacity-40 hover:opacity-100"
+                            className="p-1.5 text-text-muted hover:text-text-primary transition-colors opacity-40 hover:opacity-100"
                         >
                             <MoreVertical className="w-4 h-4" />
                         </button>
@@ -177,9 +177,9 @@ export function SchoolAccordion({
                                 >
                                     <button
                                         onClick={() => { onEditSchool(school); setShowOptions(false); }}
-                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-text-secondary hover:bg-white/5 transition-colors"
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-text-secondary hover:bg-surface-secondary transition-colors"
                                     >
-                                        <Edit2 className="w-3.5 h-3.5 text-primary-400" /> Editar Escuela
+                                        <Edit2 className="w-3.5 h-3.5 text-primary-500 dark:text-primary-400" /> Editar Escuela
                                     </button>
                                     <button
                                         onClick={() => {
@@ -226,7 +226,7 @@ export function SchoolAccordion({
                             )} />
                             <span className={cn(
                                 "text-[10px] font-black uppercase tracking-wider",
-                                nextClassInfo.isToday ? "text-emerald-400" : "text-text-muted opacity-30"
+                                nextClassInfo.isToday ? "text-emerald-600 dark:text-emerald-400" : "text-text-muted opacity-30"
                             )}>
                                 {nextClassInfo.isToday ? 'Activa' : 'Inactiva'}
                             </span>
@@ -268,7 +268,7 @@ export function SchoolAccordion({
                         exit={{ opacity: 0, height: 0 }}
                         className="px-6 pb-8 relative z-10"
                     >
-                        <div className="pt-6 border-t border-white/5 space-y-4">
+                        <div className="pt-6 border-t border-border dark:border-white/5 space-y-4">
                             <div className="flex items-center justify-between px-2">
                                 <h4 className="text-xs font-black text-text-muted uppercase tracking-widest">
                                     Cursos de {school.name}
@@ -283,7 +283,7 @@ export function SchoolAccordion({
  
                             <div className="space-y-2">
                                 {courses.length === 0 ? (
-                                    <div className="text-center py-10 bg-white/5 rounded-3xl border border-dashed border-white/10">
+                                    <div className="text-center py-10 bg-surface-secondary/30 dark:bg-white/5 rounded-3xl border border-dashed border-border dark:border-white/10">
                                         <p className="text-xs font-bold text-text-muted opacity-50 uppercase tracking-wider italic">No hay cursos registrados</p>
                                     </div>
                                 ) : (
@@ -292,7 +292,7 @@ export function SchoolAccordion({
                                             key={course.id}
                                             initial={{ opacity: 0, x: -10 }}
                                             animate={{ opacity: 1, x: 0 }}
-                                            className="group/course relative flex items-center gap-4 p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all"
+                                            className="group/course relative flex items-center gap-4 p-4 bg-surface dark:bg-white/5 hover:bg-surface-secondary dark:hover:bg-white/10 rounded-2xl border border-border dark:border-white/5 transition-all"
                                         >
                                             <div 
                                                 className="w-1 h-8 rounded-full flex-shrink-0" 

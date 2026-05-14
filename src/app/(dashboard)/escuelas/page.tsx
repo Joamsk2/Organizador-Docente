@@ -114,9 +114,9 @@ export default function EscuelasPage() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleCreateSchool}
-                    className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-surface-secondary text-white rounded-xl font-bold transition-all hover:bg-white/5 border border-white/10 text-xs shadow-lg"
+                    className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white rounded-xl font-bold transition-all hover:bg-primary-700 border border-primary-500/20 text-xs shadow-lg shadow-primary-600/20"
                 >
-                    <Plus className="w-4 h-4 text-primary-400" />
+                    <Plus className="w-4 h-4" />
                     Nueva Escuela
                 </motion.button>
             </div>
@@ -126,18 +126,18 @@ export default function EscuelasPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-10 p-6 rounded-[2rem] bg-gradient-to-br from-surface-secondary/40 to-surface-secondary/10 border border-white/5 backdrop-blur-md relative overflow-hidden group"
+                    className="mb-10 p-6 rounded-[2rem] bg-gradient-to-br from-surface to-surface-secondary dark:from-surface-secondary/40 dark:to-surface-secondary/10 border border-border dark:border-white/5 backdrop-blur-md relative overflow-hidden group shadow-sm dark:shadow-none"
                 >
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[80px] -mr-32 -mt-32 animate-pulse" />
                     
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="space-y-2">
-                            <span className="text-[10px] font-black text-primary-400 uppercase tracking-[0.3em]">Tu Jornada Hoy</span>
+                            <span className="text-[10px] font-black text-primary-600 dark:text-primary-400 uppercase tracking-[0.3em]">Tu Jornada Hoy</span>
                             <h2 className="text-2xl font-bold text-text-primary tracking-tight">
-                                Tienes <span className="text-primary-400">{courses.filter(c => {
+                                Tienes <span className="text-primary-600 dark:text-primary-400">{courses.filter(c => {
                                     const todayNum = new Date().getDay();
                                     return c.course_schedules?.some((s: any) => s.day_of_week === todayNum);
-                                }).length} clases</span> en <span className="text-primary-400">{new Set(courses.filter(c => {
+                                }).length} clases</span> en <span className="text-primary-600 dark:text-primary-400">{new Set(courses.filter(c => {
                                     const todayNum = new Date().getDay();
                                     return c.course_schedules?.some((s: any) => s.day_of_week === todayNum);
                                 }).map(c => c.school_id)).size} escuelas</span>
@@ -145,18 +145,18 @@ export default function EscuelasPage() {
                         </div>
                         
                         <div className="flex items-center gap-4">
-                            <div className="px-4 py-3 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-3">
-                                <Clock className="w-4 h-4 text-primary-400" />
+                            <div className="px-4 py-3 rounded-2xl bg-surface-secondary/50 dark:bg-white/5 border border-border dark:border-white/5 flex items-center gap-3">
+                                <Clock className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                                 <div className="flex flex-col">
-                                    <span className="text-[8px] font-bold text-text-muted uppercase opacity-40">Próxima</span>
-                                    <span className="text-sm font-bold text-white">13:30 hs</span>
+                                    <span className="text-[8px] font-bold text-text-muted uppercase opacity-60 dark:opacity-40">Próxima</span>
+                                    <span className="text-sm font-bold text-text-primary dark:text-white">13:30 hs</span>
                                 </div>
                             </div>
-                            <div className="px-4 py-3 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-3">
-                                <Building2 className="w-4 h-4 text-primary-400" />
+                            <div className="px-4 py-3 rounded-2xl bg-surface-secondary/50 dark:bg-white/5 border border-border dark:border-white/5 flex items-center gap-3">
+                                <Building2 className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                                 <div className="flex flex-col">
-                                    <span className="text-[8px] font-bold text-text-muted uppercase opacity-40">Lugar</span>
-                                    <span className="text-sm font-bold text-white truncate max-w-[100px]">CPEM 12</span>
+                                    <span className="text-[8px] font-bold text-text-muted uppercase opacity-60 dark:opacity-40">Lugar</span>
+                                    <span className="text-sm font-bold text-text-primary dark:text-white truncate max-w-[100px]">CPEM 12</span>
                                 </div>
                             </div>
                         </div>
@@ -178,7 +178,7 @@ export default function EscuelasPage() {
             {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[1, 2, 3].map(i => (
-                        <div key={i} className="h-32 bg-surface-secondary/30 rounded-2xl border border-white/5 animate-pulse" />
+                        <div key={i} className="h-32 bg-surface-secondary/50 dark:bg-surface-secondary/30 rounded-2xl border border-border dark:border-white/5 animate-pulse" />
                     ))}
                 </div>
             ) : schools.length === 0 ? (
