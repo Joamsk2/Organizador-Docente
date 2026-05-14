@@ -7,6 +7,7 @@ import { getURL } from '@/lib/utils'
 import { GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { translateAuthError } from '@/lib/auth-errors'
 
 export default function LoginPage() {
     const [email, setEmail] = useState('')
@@ -23,7 +24,8 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
 
         if (error) {
-            toast.error('Error al iniciar sesión', { description: error.message })
+            const { title, description } = translateAuthError(error.message)
+            toast.error(title, { description })
             setLoading(false)
             return
         }

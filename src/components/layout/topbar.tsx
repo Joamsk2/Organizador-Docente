@@ -10,6 +10,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTeacher } from '@/hooks/use-teacher'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { GlobalSearch } from './global-search'
 
 interface TopbarProps {
     onMobileMenuToggle: () => void
@@ -36,11 +37,8 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [fetchTeacher])
 
-    const notifications = [
-        { id: 1, title: 'Alumnos en riesgo', message: 'Se han detectado 3 alumnos con baja asistencia.', time: 'Hace 5 min', type: 'alert' },
-        { id: 2, title: 'Nuevas entregas', message: 'Tienes 5 trabajos prácticos pendientes de corregir.', time: 'Hace 1 hora', type: 'info' },
-        { id: 3, title: 'Sistema actualizado', message: 'Hemos añadido el nuevo módulo de Agenda.', time: 'Hace 2 horas', type: 'success' },
-    ]
+    const notifications: any[] = []
+
 
     const handleLogout = async () => {
         const supabase = createClient()
@@ -60,21 +58,14 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
             </button>
 
             {/* Search */}
-            <div id="tour-search" className="flex-1 max-w-md relative hidden sm:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-                <input
-                    type="text"
-                    placeholder="Buscar cursos, alumnos, TPs..."
-                    className="w-full pl-10 pr-4 py-2 bg-surface-secondary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                />
-            </div>
+            <GlobalSearch />
 
             <div className="flex items-center gap-1 ml-auto">
                 {/* Help / Restart Tour */}
                 <button 
-                    onClick={() => {
-                        updatePreferences({ has_seen_tutorial: false })
-                        window.location.reload() // Recargar para disparar el tour de nuevo
+                    onClick={async () => {
+                        await updatePreferences({ has_seen_tutorial: false })
+                        router.refresh() // Refrescar para disparar el tour de nuevo sin recarga total
                     }}
                     className="p-2 rounded-lg text-text-secondary hover:bg-surface-hover transition-colors"
                     title="Ver tutorial de nuevo"
@@ -93,7 +84,9 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
                         )}
                     >
                         <Bell className="w-5 h-5" />
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-surface" />
+                        {notifications.length > 0 && (
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-surface" />
+                        )}
                     </button>
 
                     <AnimatePresence>
@@ -109,15 +102,23 @@ export function Topbar({ onMobileMenuToggle }: TopbarProps) {
                                     <h3 className="font-black text-text-primary">Notificaciones</h3>
                                 </div>
                                 <div className="max-h-[300px] overflow-y-auto">
-                                    {notifications.map((n) => (
-                                        <div key={n.id} className="p-4 border-b border-border last:border-0 hover:bg-surface-secondary transition-colors cursor-pointer">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <p className="text-sm font-bold text-text-primary">{n.title}</p>
-                                                <span className="text-[10px] text-text-muted font-medium">{n.time}</span>
+                                    {notifications.length > 0 ? (
+                                        notifications.map((n) => (
+                                            <div key={n.id} className="p-4 border-b border-border last:border-0 hover:bg-surface-secondary transition-colors cursor-pointer">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <p className="text-sm font-bold text-text-primary">{n.title}</p>
+                                                    <span className="text-[10px] text-text-muted font-medium">{n.time}</span>
+                                                </div>
+                                                <p className="text-xs text-text-secondary leading-relaxed">{n.message}</p>
                                             </div>
-                                            <p className="text-xs text-text-secondary leading-relaxed">{n.message}</p>
+                                        ))
+                                    ) : (
+                                        <div className="p-8 text-center">
+                                            <Bell className="w-8 h-8 text-text-muted mx-auto mb-3 opacity-20" />
+                                            <p className="text-sm text-text-secondary font-medium">No tienes notificaciones</p>
+                                            <p className="text-xs text-text-muted mt-1">Te avisaremos cuando haya novedades.</p>
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                                 <div className="p-3 bg-surface-secondary/30 text-center">
                                     <button className="text-xs font-bold text-primary-600 hover:underline">Marcar todas como leídas</button>

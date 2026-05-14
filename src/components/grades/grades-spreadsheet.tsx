@@ -8,6 +8,9 @@ import type { Database } from '@/lib/types/database'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
+const CONCEPTO_COLUMN = 'Concepto'
+const isPerformanceCategory = (cat: string) => cat.startsWith('Desempeño ')
+
 type Grade = Database['public']['Tables']['grades']['Row'] & { is_qualitative?: boolean | null }
 type InsertGrade = Database['public']['Tables']['grades']['Insert'] & { is_qualitative?: boolean | null }
 
@@ -21,6 +24,7 @@ const QUALITATIVE_SCALE = [
 interface SuggestedColumn {
     id: string
     title: string
+    created_at?: string | null
 }
 
 interface GradesSpreadsheetProps {
@@ -68,15 +72,48 @@ export function GradesSpreadsheet({
         }
     }, [isAddingColumn])
 
+    // Check if there are any daily performance grades to show the Concepto column
+    const hasPerformanceGrades = grades.some(g => isPerformanceCategory(g.category))
+
+    // Helper to get the concept average for a student
+    const getConceptAverage = (studentId: string): number | null => {
+        const perfGrades = grades.filter(g => g.student_id === studentId && isPerformanceCategory(g.category))
+        if (perfGrades.length === 0) return null
+        const sum = perfGrades.reduce((acc, g) => acc + g.value, 0)
+        return Number((sum / perfGrades.length).toFixed(1))
+    }
+
     // Extract unique categories from grades, plus any manually added columns and suggested
+    // Filter out daily performance categories (Desempeño DD/MM) — they go into "Concepto"
     useEffect(() => {
         const existingCategories = Array.from(new Set(grades.map(g => g.category)))
+            .filter(cat => !isPerformanceCategory(cat))
         const suggestedTitles = (suggestedColumns || []).map(s => s.title)
 
         setColumns(prev => {
-            const merged = new Set([...prev, ...existingCategories, ...suggestedTitles])
-            // Only keep columns that are not in hiddenColumns
-            return Array.from(merged).filter(c => !hiddenColumns.includes(c))
+            const merged = new Set([...prev.filter(c => !isPerformanceCategory(c)), ...existingCategories, ...suggestedTitles])
+            const finalColumns = Array.from(merged).filter(c => !hiddenColumns.includes(c))
+            
+            // Sort by most recent grade date or assignment date
+            return finalColumns.sort((a, b) => {
+                const gradesA = grades.filter(g => g.category === a)
+                const gradesB = grades.filter(g => g.category === b)
+                
+                // Check if it's a suggested assignment column
+                const suggestedA = suggestedColumns?.find(s => s.title === a)
+                const suggestedB = suggestedColumns?.find(s => s.title === b)
+
+                // Get date from assignment if exists, otherwise from grades
+                const dateA = suggestedA?.created_at 
+                    ? new Date(suggestedA.created_at).getTime()
+                    : (gradesA.length > 0 ? Math.max(...gradesA.map(g => new Date(g.created_at || 0).getTime())) : 0)
+                
+                const dateB = suggestedB?.created_at
+                    ? new Date(suggestedB.created_at).getTime()
+                    : (gradesB.length > 0 ? Math.max(...gradesB.map(g => new Date(g.created_at || 0).getTime())) : 0)
+                
+                return dateB - dateA
+            })
         })
     }, [grades, suggestedColumns, hiddenColumns])
 
@@ -109,6 +146,8 @@ export function GradesSpreadsheet({
             return
         }
 
+        const assignmentId = suggestedColumns?.find(s => s.title === category)?.id || existingGrade?.assignment_id
+
         await onSaveGrade({
             id: existingGrade?.id,
             student_id: studentId,
@@ -116,7 +155,8 @@ export function GradesSpreadsheet({
             period: period,
             category: category,
             value: value,
-            is_qualitative: isQualitative
+            is_qualitative: isQualitative,
+            assignment_id: assignmentId
         } as any) // Type cast because we haven't updated the generated types yet
     }
 
@@ -129,7 +169,7 @@ export function GradesSpreadsheet({
 
         const isDistinct = !columns.some(c => c.toLowerCase() === name.toLowerCase())
         if (isDistinct) {
-            setColumns([...columns, name])
+            setColumns([name, ...columns]) // Add at the beginning (recent)
             setColumnTypes(prev => ({
                 ...prev,
                 [name]: isQualitativeMode ? 'qualitative' : 'numeric'
@@ -224,11 +264,21 @@ export function GradesSpreadsheet({
                     {/* Define column widths */}
                     {hasColumns && (
                         <colgroup>
+                            {/* Alumno */}
                             <col style={{ width: '220px', minWidth: '220px' }} />
+                            
+                            {/* Concepto (if exists) */}
+                            {hasPerformanceGrades && (
+                                <col style={{ width: '130px', minWidth: '100px' }} />
+                            )}
+
+                            {/* + Columna button */}
+                            <col style={{ width: '130px', minWidth: '130px' }} />
+
+                            {/* Practical Works */}
                             {columns.map(col => (
                                 <col key={col} style={{ width: '140px', minWidth: '100px' }} />
                             ))}
-                            <col style={{ width: '130px', minWidth: '130px' }} />
                         </colgroup>
                     )}
 
@@ -245,6 +295,69 @@ export function GradesSpreadsheet({
                                 </div>
                             </th>
 
+                            {/* Auto-generated Concepto column */}
+                            {hasPerformanceGrades && (
+                                <th
+                                    className="px-3 py-3.5 text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-[0.08em] text-center truncate border-l border-slate-200/70 dark:border-slate-700/50 bg-amber-50/30 dark:bg-amber-950/10"
+                                    title="Promedio automático del desempeño diario en clase"
+                                >
+                                    <span className="truncate">Concepto</span>
+                                </th>
+                            )}
+
+                            {/* Add Column Button */}
+                            <th className="px-3 py-3.5 border-l border-slate-200/70 dark:border-slate-700/50">
+                                {isAddingColumn ? (
+                                    <form onSubmit={handleAddColumn} className="flex flex-col gap-2 p-1.5 bg-primary-50/50 dark:bg-primary-950/20 rounded-lg">
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            placeholder="Nombre..."
+                                            value={newColumnName}
+                                            onChange={e => setNewColumnName(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Escape') setIsAddingColumn(false)
+                                            }}
+                                            onBlur={() => {
+                                                if (!newColumnName.trim()) setIsAddingColumn(false)
+                                            }}
+                                            className="w-full bg-white dark:bg-slate-900 border border-primary-200 dark:border-primary-800 rounded-md px-2 py-1 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                                        />
+                                        <div className="flex items-center justify-between gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsQualitativeMode(!isQualitativeMode)}
+                                                className={cn(
+                                                    "text-[9px] px-1.5 py-0.5 rounded border transition-colors",
+                                                    isQualitativeMode 
+                                                        ? "bg-primary-100 border-primary-200 text-primary-700 dark:bg-primary-900/40 dark:border-primary-800 dark:text-primary-300"
+                                                        : "bg-slate-100 border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"
+                                                )}
+                                            >
+                                                {isQualitativeMode ? 'Cualitativa' : 'Numérica'}
+                                            </button>
+                                            <div className="flex gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsAddingColumn(false)}
+                                                    className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded"
+                                                >
+                                                    <X className="w-3 h-3 text-slate-400" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <button
+                                        onClick={() => setIsAddingColumn(true)}
+                                        className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-950/30 rounded-lg transition-all border border-dashed border-primary-200 dark:border-primary-800/50"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" /> Columna
+                                    </button>
+                                )}
+                            </th>
+
+                            {/* Practical Work Columns */}
                             {columns.map(col => (
                                 <th
                                     key={col}
@@ -264,69 +377,19 @@ export function GradesSpreadsheet({
                                 </th>
                             ))}
 
-                            <th className="px-3 py-3.5 border-l border-slate-200/70 dark:border-slate-700/50">
-                                {isAddingColumn ? (
-                                    <form onSubmit={handleAddColumn} className="flex flex-col gap-2 p-1.5 bg-primary-50/50 dark:bg-primary-950/20 rounded-lg">
-                                        <input
-                                            type="text"
-                                            autoFocus
-                                            placeholder="Nombre..."
-                                            value={newColumnName}
-                                            onChange={e => setNewColumnName(e.target.value)}
-                                            onBlur={(e) => {
-                                                // Small delay to allow clicking the toggle buttons
-                                                setTimeout(() => {
-                                                    if (document.activeElement?.tagName !== 'BUTTON') {
-                                                        saveNewColumn()
-                                                    }
-                                                }, 150)
-                                            }}
-                                            className="w-full px-2 py-1 text-xs bg-white dark:bg-slate-900 border border-primary-200 dark:border-primary-800 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all shadow-sm"
-                                        />
-                                        <div className="flex items-center gap-1.5 p-0.5 bg-white/50 dark:bg-slate-900/50 rounded-md border border-slate-200 dark:border-slate-800">
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsQualitativeMode(false)}
-                                                onMouseDown={(e) => e.preventDefault()} // Prevent blur
-                                                className={cn(
-                                                    "flex-1 text-[10px] py-1 rounded transition-all",
-                                                    !isQualitativeMode ? "bg-primary-600 text-white font-bold shadow-sm" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                                )}
-                                            >
-                                                1 - 10
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsQualitativeMode(true)}
-                                                onMouseDown={(e) => e.preventDefault()} // Prevent blur
-                                                className={cn(
-                                                    "flex-1 text-[10px] py-1 rounded transition-all",
-                                                    isQualitativeMode ? "bg-primary-600 text-white font-bold shadow-sm" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-                                                )}
-                                            >
-                                                Concepto
-                                            </button>
-                                        </div>
-                                    </form>
-                                ) : (
-                                    <button
-                                        onClick={() => setIsAddingColumn(true)}
-                                        className="flex items-center gap-1.5 text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors w-full px-1 py-0.5 rounded-md hover:bg-primary-50 dark:hover:bg-primary-950/30"
-                                    >
-                                        <Plus className="w-3.5 h-3.5" /> Columna
-                                    </button>
-                                )}
-                            </th>
                         </tr>
                     </thead>
 
                     {/* ── Body ── */}
                     <tbody>
                         {students.map((student, rowIndex) => {
-                            // Calculate average
+                            // Calculate average (practical works only)
                             const studentGrades = columns.map(col => getGradeForCell(student.id, col)).filter(g => g !== undefined)
-                            const average = studentGrades.length > 0
-                                ? (studentGrades.reduce((acc, g) => acc + (g?.value || 0), 0) / studentGrades.length)
+                            const conceptAvg = getConceptAverage(student.id)
+                            // Include concept in overall average if it exists
+                            const allValues = [...studentGrades.map(g => g?.value || 0), ...(conceptAvg !== null ? [conceptAvg] : [])]
+                            const average = allValues.length > 0
+                                ? (allValues.reduce((a, b) => a + b, 0) / allValues.length)
                                 : null
 
                             const isEven = rowIndex % 2 === 0
@@ -373,6 +436,32 @@ export function GradesSpreadsheet({
                                         </div>
                                     </td>
 
+                                    {/* Concepto cell (read-only average) */}
+                                    {hasPerformanceGrades && (() => {
+                                        const avg = getConceptAverage(student.id)
+                                        return (
+                                            <td className="p-0 border-l border-slate-100 dark:border-slate-800/60 bg-amber-50/20 dark:bg-amber-950/10">
+                                                <div className="w-full h-full min-h-[48px] px-3 py-2 flex items-center justify-center">
+                                                    {avg !== null ? (
+                                                        <span className={cn(
+                                                            "text-sm font-bold",
+                                                            avg >= 7 ? "text-emerald-600 dark:text-emerald-400"
+                                                                : avg >= 4 ? "text-amber-600 dark:text-amber-400"
+                                                                    : "text-red-600 dark:text-red-400"
+                                                        )}>
+                                                            {avg}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-sm text-slate-300 dark:text-slate-600">–</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        )
+                                    })()}
+
+                                    {/* Empty cell for "+ Columna" alignment */}
+                                    <td className="border-l border-slate-100 dark:border-slate-800/60 bg-primary-50/10 dark:bg-primary-950/5"></td>
+
                                     {/* Grade Cells */}
                                     {columns.map(col => {
                                         const grade = getGradeForCell(student.id, col)
@@ -402,9 +491,6 @@ export function GradesSpreadsheet({
                                             </td>
                                         )
                                     })}
-
-                                    {/* Empty tail cell for "+ Columna" alignment */}
-                                    <td className="border-l border-slate-100 dark:border-slate-800/60"></td>
                                 </tr>
                             )
                         })}

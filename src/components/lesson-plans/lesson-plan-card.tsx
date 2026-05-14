@@ -59,11 +59,7 @@ export function LessonPlanCard({ plan, onEdit, onDelete }: LessonPlanCardProps) 
                         <Edit className="w-4 h-4" />
                     </button>
                     <button
-                        onClick={() => {
-                            if (window.confirm(`¿Seguro que querés eliminar "${plan.title}"?`)) {
-                                onDelete(plan.id)
-                            }
-                        }}
+                        onClick={() => onDelete(plan.id)}
                         className="p-2 text-text-muted hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Eliminar Planificación"
                     >

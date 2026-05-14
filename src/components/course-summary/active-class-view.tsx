@@ -71,7 +71,7 @@ export function ActiveClassView({
     useEffect(() => {
         const initialRecords: Record<string, any> = {}
         students.forEach(s => {
-            initialRecords[s.id] = { attendance: 'presente', performance: '', notes: '' }
+            initialRecords[s.id] = { attendance: 'presente', performance: 'bien', notes: '' }
         })
         setRecords(initialRecords)
         
@@ -116,7 +116,7 @@ export function ActiveClassView({
                 recordsData.forEach(r => {
                     loadedRecords[r.student_id] = {
                         ...loadedRecords[r.student_id],
-                        performance: r.performance_score || '',
+                        performance: r.performance_score || 'bien',
                         notes: r.quick_notes || ''
                     }
                 })
@@ -213,7 +213,8 @@ export function ActiveClassView({
                 course_id: courseId,
                 student_id: studentId,
                 date: selectedDate,
-                status: data.attendance as any
+                status: data.attendance as any,
+                notes: data.notes || null
             }))
             
             await supabase.from('attendance').delete().eq('course_id', courseId).eq('date', selectedDate)
@@ -237,8 +238,8 @@ export function ActiveClassView({
             // Sync grades
             const PERFORMANCE_TO_GRADE: Record<string, number> = {
                 'excelente': 10,
-                'bien': 8,
-                'regular': 7,
+                'bien': 7,
+                'regular': 6,
                 'mal': 4
             }
 

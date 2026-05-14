@@ -1,14 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { 
     Clock, Building2, Calendar, ChevronLeft, ChevronRight,
-    MapPin, BookOpen, GraduationCap, Sparkles, ClipboardList
+    MapPin, BookOpen, GraduationCap, Sparkles, ClipboardList, Plus, Trash2
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn, formatTime } from '@/lib/utils'
 import Link from 'next/link'
+import { toast } from 'sonner'
+import { format, startOfWeek, addDays, isToday as isDateToday } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { ScheduleForm } from '@/components/agenda/schedule-form'
 
 interface ScheduleItem {
     id: string
@@ -35,6 +40,7 @@ const DAYS = [
 ]
 
 export default function AgendaPage() {
+    const router = useRouter()
     const [schedules, setSchedules] = useState<ScheduleItem[]>([])
     const [loading, setLoading] = useState(true)
     const [view, setView] = useState<'weekly' | 'daily'>('weekly')
@@ -42,6 +48,19 @@ export default function AgendaPage() {
         const d = new Date().getDay()
         return d === 0 ? 1 : d // Default to Monday if Sunday
     })
+    const [isModalOpen, setIsModalOpen] = useState(false)
+
+    // Helper to get date of the current week's day
+    const getDayInfo = (dayId: number) => {
+        const today = new Date()
+        const start = startOfWeek(today, { weekStartsOn: 1 })
+        const date = addDays(start, dayId - 1)
+        return {
+            label: format(date, "EEEE", { locale: es }),
+            shortLabel: format(date, "EEE dd", { locale: es }),
+            isToday: isDateToday(date)
+        }
+    }
 
     useEffect(() => {
         fetchSchedules()
@@ -66,6 +85,9 @@ export default function AgendaPage() {
 
         if (error) {
             console.error('Error fetching schedules:', error)
+            toast.error('Error al cargar la agenda', {
+                description: 'No se pudieron cargar los horarios. Verificá tu conexión e intentá recargar la página.',
+            })
         } else {
             console.log('Fetched schedules:', data)
             setSchedules((data as any) || [])
@@ -77,6 +99,24 @@ export default function AgendaPage() {
         return schedules.filter(s => s.day_of_week === day)
     }
 
+    const handleDeleteSchedule = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation()
+        if (!confirm('¿Estás seguro de que querés eliminar este horario?')) return
+
+        const supabase = createClient()
+        const { error } = await supabase
+            .from('course_schedules')
+            .delete()
+            .eq('id', id)
+
+        if (error) {
+            toast.error('Error al eliminar el horario')
+        } else {
+            toast.success('Horario eliminado')
+            fetchSchedules()
+        }
+    }
+
     const todayId = new Date().getDay() === 0 ? 1 : new Date().getDay()
 
     return (
@@ -86,10 +126,10 @@ export default function AgendaPage() {
                 <div className="space-y-2">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/10 text-primary-400 text-[10px] font-black uppercase tracking-wider">
                         <Sparkles className="w-3 h-3" />
-                        Planificación Inteligente
+                        Agenda Semanal
                     </div>
                     <h1 className="text-5xl font-black text-text-primary tracking-tight">
-                        {view === 'weekly' ? 'Mi Agenda' : `Clases del ${DAYS.find(d => d.id === selectedDay)?.label}`}
+                        {view === 'weekly' ? 'Mi Agenda' : `Clases del ${getDayInfo(selectedDay).label}`}
                     </h1>
                 </div>
 
@@ -120,6 +160,14 @@ export default function AgendaPage() {
                         Hoy
                     </button>
                 </div>
+
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-black transition-all shadow-xl shadow-primary-600/25"
+                >
+                    <Plus className="w-5 h-5" />
+                    Nuevo Horario
+                </button>
             </div>
 
             {/* Content View */}
@@ -133,7 +181,8 @@ export default function AgendaPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 items-start">
                     {DAYS.filter(d => d.id <= 5 || getDaySchedules(d.id).length > 0).map((day, idx) => {
                         const dayClasses = getDaySchedules(day.id)
-                        const isToday = todayId === day.id
+                        const dayInfo = getDayInfo(day.id)
+                        const isToday = dayInfo.isToday
 
                         return (
                             <motion.div
@@ -148,12 +197,18 @@ export default function AgendaPage() {
                                         : "bg-surface-secondary/30 hover:bg-surface-secondary/50"
                                 )}
                             >
-                                <div className="p-8 pb-4 flex items-center justify-between">
+                                <div 
+                                    className="p-8 pb-4 flex items-center justify-between cursor-pointer group/header"
+                                    onClick={() => {
+                                        setSelectedDay(day.id)
+                                        setView('daily')
+                                    }}
+                                >
                                     <h2 className={cn(
-                                        "text-2xl font-black tracking-tight",
-                                        isToday ? "text-primary-500" : "text-text-primary"
+                                        "text-2xl font-black tracking-tight transition-colors",
+                                        isToday ? "text-primary-500" : "text-text-primary group-hover/header:text-primary-400"
                                     )}>
-                                        {day.label}
+                                        <span className="capitalize">{dayInfo.shortLabel}</span>
                                     </h2>
                                     {isToday && (
                                         <div className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
@@ -171,8 +226,7 @@ export default function AgendaPage() {
                                                 key={cls.id}
                                                 className="group relative p-5 rounded-[2rem] bg-surface-secondary border border-white/5 hover:border-primary-500/30 transition-all cursor-pointer shadow-sm hover:shadow-xl hover:shadow-black/20"
                                                 onClick={() => {
-                                                    setSelectedDay(day.id)
-                                                    setView('daily')
+                                                    router.push(`/cursos/${(cls.courses as any).id}`)
                                                 }}
                                             >
                                                 <div className="flex items-center gap-3 mb-3">
@@ -190,6 +244,13 @@ export default function AgendaPage() {
                                                 <p className="text-[11px] font-bold text-text-muted mt-1 truncate opacity-70">
                                                     {cls.courses?.schools?.name}
                                                 </p>
+                                                <button
+                                                    onClick={(e) => handleDeleteSchedule(e, cls.id)}
+                                                    className="absolute top-4 right-4 p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                                    title="Eliminar horario"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
                                             </div>
                                         ))
                                     )}
@@ -206,28 +267,31 @@ export default function AgendaPage() {
                     className="max-w-5xl mx-auto w-full space-y-12"
                 >
                     <div className="flex items-center justify-center gap-3 p-2 bg-surface-secondary/50 rounded-[2.5rem] w-fit mx-auto border border-white/5">
-                        {DAYS.map(d => (
-                            <button
-                                key={d.id}
-                                onClick={() => setSelectedDay(d.id)}
-                                className={cn(
-                                    "flex flex-col items-center justify-center w-14 h-20 rounded-2xl transition-all duration-300",
-                                    selectedDay === d.id
-                                        ? "bg-primary-600 text-white shadow-2xl shadow-primary-600/40 scale-105"
-                                        : "hover:bg-white/5 text-text-muted"
-                                )}
-                            >
-                                <span className="text-[9px] uppercase font-black tracking-widest opacity-60">{d.label.slice(0, 3)}</span>
-                                <span className="text-xl font-black mt-1">{d.id}</span>
-                            </button>
-                        ))}
+                        {DAYS.map(d => {
+                            const info = getDayInfo(d.id)
+                            return (
+                                <button
+                                    key={d.id}
+                                    onClick={() => setSelectedDay(d.id)}
+                                    className={cn(
+                                        "flex flex-col items-center justify-center w-16 h-20 rounded-2xl transition-all duration-300",
+                                        selectedDay === d.id
+                                            ? "bg-primary-600 text-white shadow-2xl shadow-primary-600/40 scale-105"
+                                            : "hover:bg-white/5 text-text-muted"
+                                    )}
+                                >
+                                    <span className="text-[9px] uppercase font-black tracking-widest opacity-60">{info.shortLabel.split(' ')[0]}</span>
+                                    <span className="text-xl font-black mt-1">{info.shortLabel.split(' ')[1]}</span>
+                                </button>
+                            )
+                        })}
                     </div>
 
                     <div className="relative space-y-6 before:absolute before:left-[119px] before:top-0 before:bottom-0 before:w-px before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent hidden md:block">
                         {getDaySchedules(selectedDay).length === 0 ? (
                             <div className="text-center py-32 bg-surface-secondary/30 rounded-[3rem] border border-white/5">
                                 <Clock className="w-16 h-16 text-text-muted mx-auto mb-6 opacity-10" />
-                                <h3 className="text-2xl font-black text-text-primary">Día de Planificación</h3>
+                                <h3 className="text-2xl font-black text-text-primary">Sin clases este día</h3>
                                 <p className="text-text-muted font-medium mt-2">No hay clases programadas para este día.</p>
                             </div>
                         ) : (
@@ -273,13 +337,22 @@ export default function AgendaPage() {
                                                 </div>
                                             </div>
 
-                                            <Link 
-                                                href={`/cursos/${(cls.courses as any).id}/clase`}
-                                                className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-primary-600 text-white font-black hover:bg-primary-700 transition-all shadow-xl shadow-primary-600/30"
-                                            >
-                                                <ClipboardList className="w-5 h-5" />
-                                                Tomar Asistencia
-                                            </Link>
+                                            <div className="flex flex-col gap-2">
+                                                <Link 
+                                                    href={`/cursos/${(cls.courses as any).id}/clase`}
+                                                    className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-primary-600 text-white font-black hover:bg-primary-700 transition-all shadow-xl shadow-primary-600/30"
+                                                >
+                                                    <ClipboardList className="w-5 h-5" />
+                                                    Tomar Asistencia
+                                                </Link>
+                                                <button 
+                                                    onClick={(e) => handleDeleteSchedule(e, cls.id)}
+                                                    className="flex items-center justify-center gap-2 px-8 py-2 text-xs font-bold text-text-muted hover:text-red-500 transition-colors"
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                    Eliminar de la agenda
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -332,6 +405,13 @@ export default function AgendaPage() {
                     </Link>
                 </motion.div>
             )}
+
+            <ScheduleForm 
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                defaultDay={selectedDay}
+                onSuccess={fetchSchedules}
+            />
         </div>
     )
 }

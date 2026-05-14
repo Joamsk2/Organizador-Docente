@@ -55,6 +55,7 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
     const [newObservation, setNewObservation] = useState('')
     const [isAddingObservation, setIsAddingObservation] = useState(false)
     const [isExporting, setIsExporting] = useState(false)
+    const [selectedReportPeriod, setSelectedReportPeriod] = useState('1er_trimestre')
     const printRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -108,7 +109,7 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                 body: JSON.stringify({
                     student_id: studentId,
                     course_id: courseId,
-                    period: '1er_trimestre'
+                    period: selectedReportPeriod
                 })
             })
 
@@ -281,13 +282,23 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                     <div>
                         <p className="text-sm font-medium text-text-secondary mb-1">Tasa de Entregas</p>
                         <div className="flex items-baseline gap-2">
-                            <h3 className="text-3xl font-bold text-text-primary">{assignmentStats.deliveryRate}%</h3>
+                            {assignmentStats.totalAssigned > 0 ? (
+                                <h3 className="text-3xl font-bold text-text-primary">{assignmentStats.deliveryRate}%</h3>
+                            ) : (
+                                <h3 className="text-3xl font-bold text-text-muted italic">N/A</h3>
+                            )}
                         </div>
                     </div>
                     <div>
                         <div className="flex justify-between text-xs text-text-muted mb-1.5">
-                            <span>{assignmentStats.delivered} Entregados</span>
-                            <span>{assignmentStats.totalAssigned} Asignados</span>
+                            {assignmentStats.totalAssigned > 0 ? (
+                                <>
+                                    <span>{assignmentStats.delivered} Entregados</span>
+                                    <span>{assignmentStats.totalAssigned} Asignados</span>
+                                </>
+                            ) : (
+                                <span className="italic">Sin trabajos todavía</span>
+                            )}
                         </div>
                         <div className="h-2 w-full bg-surface-secondary rounded-full overflow-hidden">
                             <div
@@ -302,58 +313,103 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
             {/* Detailed Grids Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                {/* Trabajos Practicos */}
-                <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center gap-2 mb-6">
-                        <FileText className="w-5 h-5 text-primary-500" />
-                        <h3 className="text-lg font-bold text-text-primary">Últimas Entregas</h3>
+                {/* Actividad Académica Consolidada */}
+                <div className="bg-surface border border-border rounded-xl p-6 shadow-sm lg:col-span-2">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-primary-500" />
+                            <h3 className="text-lg font-bold text-text-primary">Actividad Académica</h3>
+                        </div>
                     </div>
-                    <div className="space-y-4">
-                        {assignmentStats.recentSubmissions.length > 0 ? (
-                            assignmentStats.recentSubmissions.map(sub => (
-                                <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg bg-surface-secondary/50 border border-border">
-                                    <div>
-                                        <p className="font-medium text-sm text-text-primary">{sub.assignments?.title}</p>
-                                        <p className="text-xs text-text-muted mt-0.5">Vencimiento: {sub.assignments?.due_date ? format(new Date(sub.assignments.due_date), "dd 'de' MMM", { locale: es }) : 'Sin fecha'}</p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {profile.recentEvaluations.length > 0 ? (
+                            profile.recentEvaluations.slice(0, 10).map(evalItem => (
+                                <div key={evalItem.id} className="flex items-center justify-between p-4 rounded-xl bg-surface-secondary/50 border border-border hover:border-primary-200 dark:hover:border-primary-800 transition-all group">
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                                evalItem.type === 'trabajo' 
+                                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
+                                                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                            }`}>
+                                                {evalItem.type}
+                                            </span>
+                                            {evalItem.period && (
+                                                <span className="text-[10px] text-text-muted font-medium uppercase tracking-wide">
+                                                    {evalItem.period}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="font-bold text-sm text-text-primary truncate" title={evalItem.title}>
+                                            {evalItem.title}
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            {evalItem.dueDate ? (
+                                                <p className="text-[10px] text-text-muted flex items-center gap-1">
+                                                    <Calendar className="w-3 h-3" />
+                                                    Vence: {format(new Date(evalItem.dueDate), "dd 'de' MMM", { locale: es })}
+                                                </p>
+                                            ) : (
+                                                <p className="text-[10px] text-text-muted flex items-center gap-1">
+                                                    <Calendar className="w-3 h-3" />
+                                                    {format(new Date(evalItem.date || new Date()), "dd 'de' MMM", { locale: es })}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                    <span className={`px-2.5 py-1 rounded-md text-xs font-medium border
-                                        ${sub.status === 'entregado' || sub.status === 'corregido' ? 'bg-emerald-100/50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400' :
-                                            sub.status === 'pendiente' ? 'bg-amber-100/50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400' :
-                                                'bg-surface-secondary text-text-secondary border-border'}
-                                    `}>
-                                        <span className="capitalize">{sub.status}</span>
+                                    
+                                    <div className="text-right flex flex-col items-end gap-1.5 ml-4">
+                                        {evalItem.gradeValue !== null ? (
+                                            <span className={`text-xl font-black ${
+                                                evalItem.gradeValue >= 7 ? 'text-emerald-600 dark:text-emerald-400' : 
+                                                evalItem.gradeValue >= 4 ? 'text-amber-600 dark:text-amber-400' : 
+                                                'text-red-500 dark:text-red-400'
+                                            }`}>
+                                                {evalItem.gradeValue <= 4 ? 'NP' : evalItem.gradeValue}
+                                            </span>
+                                        ) : (
+                                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border
+                                                ${evalItem.status === 'pendiente' 
+                                                    ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800' 
+                                                    : 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800'}
+                                            `}>
+                                                {evalItem.status === 'pendiente' ? 'Pendiente' : 'No Presentado'}
+                                            </span>
+                                        )}
+                                        {evalItem.submissionStatus && evalItem.submissionStatus !== 'entregado' && (
+                                            <span className="text-[9px] text-text-muted font-medium italic">
+                                                Subida: {evalItem.submissionStatus}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="col-span-full py-12 text-center bg-surface-secondary/30 rounded-2xl border border-dashed border-border">
+                                <FileText className="w-8 h-8 text-text-muted mx-auto mb-3 opacity-20" />
+                                <p className="text-sm text-text-muted italic">No hay actividad académica registrada aún</p>
+                            </div>
+                        )}
+
+                        {/* Concepto de Desempeño Diario - Separado para destacar */}
+                        {gradesStats.conceptAverage !== null && (
+                            <div className="col-span-full flex items-center justify-between p-4 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30 mt-2">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg">
+                                        <Award className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-sm text-amber-900 dark:text-amber-300">Promedio de Desempeño Diario</p>
+                                        <p className="text-[10px] text-amber-700/70 dark:text-amber-400/50 mt-0.5">Nota automática basada en la participación diaria en clase</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <span className={`text-2xl font-black ${gradesStats.conceptAverage >= 7 ? 'text-emerald-600 dark:text-emerald-400' : gradesStats.conceptAverage >= 4 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400'}`}>
+                                        {gradesStats.conceptAverage}
                                     </span>
                                 </div>
-                            ))
-                        ) : (
-                            <p className="text-sm text-text-muted italic text-center py-4">No hay trabajos prácticos registrados</p>
-                        )}
-                    </div>
-                </div>
-
-                {/* Calificaciones Recientes */}
-                <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center gap-2 mb-6">
-                        <Award className="w-5 h-5 text-primary-500" />
-                        <h3 className="text-lg font-bold text-text-primary">Calificaciones Recientes</h3>
-                    </div>
-                    <div className="space-y-4">
-                        {gradesStats.recentGrades.length > 0 ? (
-                            gradesStats.recentGrades.map(grade => (
-                                <div key={grade.id} className="flex items-center justify-between p-3 rounded-lg bg-surface-secondary/50 border border-border">
-                                    <div>
-                                        <p className="font-medium text-sm text-text-primary">{grade.category}</p>
-                                        <p className="text-xs text-text-muted mt-0.5 capitalize">{grade.period}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className={`text-lg font-bold ${Number(grade.value) >= 6 ? 'text-text-primary' : 'text-red-500 dark:text-red-400'}`}>
-                                            {grade.value}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-sm text-text-muted italic text-center py-4">No hay calificaciones registradas</p>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -463,7 +519,8 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                     observations={pdfNotes}
                     persistentObservations={persistentObservations}
                     aiSynthesis={aiSynthesis}
-                    courseName="Curso Seleccionado"
+                    courseName={profile.courseInfo?.name || "Curso Seleccionado"}
+                    teacherName={profile.teacherInfo?.full_name || "Docente"}
                 />
             </div>
 
@@ -497,6 +554,30 @@ export default function StudentProfilePage({ params }: { params: Promise<{ id: s
                                         {isGeneratingSynthesis ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                                         {isGeneratingSynthesis ? 'Analizando...' : 'Generar con IA'}
                                     </button>
+                                </div>
+                                <div className="flex items-center gap-4 mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <input 
+                                            type="radio" 
+                                            id="period-trimestre" 
+                                            name="report-period" 
+                                            checked={selectedReportPeriod !== 'anual'} 
+                                            onChange={() => setSelectedReportPeriod('1er_trimestre')}
+                                            className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                                        />
+                                        <label htmlFor="period-trimestre" className="text-xs font-medium text-text-secondary">1er Trimestre</label>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input 
+                                            type="radio" 
+                                            id="period-anual" 
+                                            name="report-period" 
+                                            checked={selectedReportPeriod === 'anual'} 
+                                            onChange={() => setSelectedReportPeriod('anual')}
+                                            className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                                        />
+                                        <label htmlFor="period-anual" className="text-xs font-medium text-text-secondary">Informe Anual</label>
+                                    </div>
                                 </div>
                                 <p className="text-xs text-text-muted mb-2">
                                     La IA analiza calificaciones, asistencia y observaciones para generar un resumen pedagógico profesional.

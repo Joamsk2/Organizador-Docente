@@ -319,29 +319,9 @@ export default async function CourseDashboardPage({ params }: { params: Promise<
                 </div>
             </div>
 
-            {/* Charts row 1: Attendance trend + Period averages */}
+            {/* Charts row 1: Attendance trend + Curriculum */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <AttendanceTrendChart data={weeklyAttendance} />
-                {periodAverages.length > 0 ? (
-                    <MetricsChart
-                        data={periodAverages}
-                        title="Promedio por Período"
-                        dataKey="promedio"
-                        color="#3b82f6"
-                    />
-                ) : (
-                    <div className="bg-surface border border-border rounded-2xl p-6 shadow-sm">
-                        <h3 className="text-base sm:text-lg font-bold text-text-primary mb-4">Promedio por Período</h3>
-                        <div className="h-[200px] flex items-center justify-center text-text-secondary text-sm">
-                            Sin calificaciones registradas
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Charts row 2: Grade distribution + Curriculum */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <GradeDistributionChart data={gradeDistribution} />
                 <CurriculumProgress modules={curriculumProgress} />
             </div>
 

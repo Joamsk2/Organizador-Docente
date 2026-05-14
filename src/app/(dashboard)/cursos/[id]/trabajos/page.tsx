@@ -7,6 +7,9 @@ import { useAssignments, type Assignment } from '@/hooks/use-assignments'
 import { KanbanBoard } from '@/components/assignments/kanban-board'
 import { AssignmentForm, type EvaluationCriterion, type ReferenceMaterial } from '@/components/assignments/assignment-form'
 import { CorrectionWizard } from '@/components/assignments/correction-wizard'
+import { ConfirmModal } from '@/components/ui/confirm-modal'
+import { toast } from 'sonner'
+
 
 function TrabajosCoursePageContent({ courseId }: { courseId: string }) {
     const [isFormOpen, setIsFormOpen] = useState(false)
@@ -14,6 +17,8 @@ function TrabajosCoursePageContent({ courseId }: { courseId: string }) {
     const [wizardAssignment, setWizardAssignment] = useState<Assignment | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [typeFilter, setTypeFilter] = useState('all')
+    const [deleteId, setDeleteId] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
     const searchParams = useSearchParams()
     const router = useRouter()
     const pathname = usePathname()
@@ -71,6 +76,20 @@ function TrabajosCoursePageContent({ courseId }: { courseId: string }) {
         const matchesType = typeFilter === 'all' || a.type === typeFilter
         return matchesSearch && matchesType
     })
+
+    const handleDelete = async () => {
+        if (!deleteId) return
+        try {
+            setIsDeleting(true)
+            await deleteAssignment(deleteId)
+            setDeleteId(null)
+        } catch (error) {
+            console.error('Error deleting assignment:', error)
+            toast.error('No se pudo eliminar el trabajo')
+        } finally {
+            setIsDeleting(false)
+        }
+    }
 
     return (
         <div className="space-y-6 animate-fade-in max-w-7xl mx-auto flex flex-col h-full pt-4">
@@ -135,7 +154,7 @@ function TrabajosCoursePageContent({ courseId }: { courseId: string }) {
                             assignments={filteredAssignments}
                             onStatusChange={updateAssignmentStatus}
                             onEdit={handleEdit}
-                            onDelete={deleteAssignment}
+                            onDelete={(id) => setDeleteId(id)}
                             onCorrect={handleCorrect}
                         />
                     </div>
@@ -174,6 +193,16 @@ function TrabajosCoursePageContent({ courseId }: { courseId: string }) {
                     onClose={() => setWizardAssignment(null)}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={handleDelete}
+                title="Eliminar Trabajo Práctico"
+                description={`¿Estás seguro de que deseas eliminar este trabajo práctico? Se perderán todas las notas y entregas asociadas.`}
+                loading={isDeleting}
+                variant="danger"
+            />
         </div>
     )
 }

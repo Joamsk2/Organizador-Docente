@@ -1,15 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
     Building2, BookOpen, Users, ClipboardList,
     Clock, ChevronRight, EyeOff, CheckCircle2, AlertTriangle, FileText,
-    Sparkles, ArrowUpRight, GraduationCap, Calendar
+    Sparkles, ArrowUpRight, GraduationCap, Calendar, Loader2
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn, formatTime } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 
 interface Stats {
     schools: number
@@ -49,15 +51,18 @@ interface RiskStudent {
 }
 
 export default function DashboardPage() {
+    const router = useRouter()
     const [stats, setStats] = useState<Stats>({ schools: 0, courses: 0, students: 0, pendingAssignments: 0 })
     const [upcomingClasses, setUpcomingClasses] = useState<UpcomingClass[]>([])
     const [pendingTPs, setPendingTPs] = useState<PendingTP[]>([])
     const [riskStudents, setRiskStudents] = useState<RiskStudent[]>([])
     const [loading, setLoading] = useState(true)
+    const [dismissingId, setDismissingId] = useState<string | null>(null)
     const [greeting, setGreeting] = useState('Buenos días')
     const [todayStr, setTodayStr] = useState('')
     const [userName, setUserName] = useState('')
     const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
+    const [todayAttendanceRate, setTodayAttendanceRate] = useState<number | null>(null)
 
     const [mounted, setMounted] = useState(false)
 
@@ -79,6 +84,7 @@ export default function DashboardPage() {
     }, [])
 
     const fetchData = async () => {
+        try {
         const supabase = createClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
@@ -87,10 +93,15 @@ export default function DashboardPage() {
 
         const today = new Date().getDay()
 
+        const todayDateStr = (() => {
+            const d = new Date()
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        })()
+
         // Fetch everything in parallel
         const [
             schoolsRes, coursesRes, studentsRes, assignmentsCountRes,
-            schedulesRes, assignmentsRes, riskStudentsRes
+            schedulesRes, assignmentsRes, riskStudentsRes, attendanceTodayRes
         ] = await Promise.all([
             supabase.from('schools').select('id', { count: 'exact', head: true }),
             supabase.from('courses').select('id', { count: 'exact', head: true }),
@@ -108,7 +119,11 @@ export default function DashboardPage() {
                 .limit(5),
             supabase
                 .from('students')
-                .select(`id, first_name, last_name, is_risk_handled, course_students!inner(course_id, courses(name)), attendance(status), grades(value)`)
+                .select(`id, first_name, last_name, is_risk_handled, course_students!inner(course_id, courses(name)), attendance(status), grades(value)`),
+            supabase
+                .from('attendance')
+                .select('status')
+                .eq('date', todayDateStr)
         ])
 
         setStats({
@@ -117,6 +132,14 @@ export default function DashboardPage() {
             students: studentsRes.count || 0,
             pendingAssignments: assignmentsCountRes.count || 0,
         })
+
+        const todayAttRecs = attendanceTodayRes.data || []
+        if (todayAttRecs.length > 0) {
+            const present = todayAttRecs.filter((a: any) => ['presente', 'tardanza'].includes(a.status)).length
+            setTodayAttendanceRate(Math.round((present / todayAttRecs.length) * 100))
+        } else {
+            setTodayAttendanceRate(null)
+        }
 
         if (schedulesRes.data) {
             setUpcomingClasses(schedulesRes.data.map((s: any) => ({
@@ -174,15 +197,44 @@ export default function DashboardPage() {
         }
 
         setLoading(false)
+        } catch (error) {
+            console.error('Dashboard fetchData error:', error)
+            toast.error('Error al cargar el dashboard', {
+                description: 'No se pudieron cargar los datos. Verifícá tu conexión e intentá recargar la página.',
+            })
+        } finally {
+            setLoading(false)
+        }
     }
 
-    const handleDismissRisk = async (studentId: string) => {
+    const handleDismissRisk = async (studentId: string, studentName: string) => {
         try {
+            setDismissingId(studentId)
             const supabase = createClient()
-            await supabase.from('students').update({ is_risk_handled: true }).eq('id', studentId)
+            const { error } = await supabase.from('students').update({ is_risk_handled: true }).eq('id', studentId)
+            
+            if (error) throw error
+
             setRiskStudents(prev => prev.filter(s => s.id !== studentId))
+            
+            toast.success(`${studentName} desestimado`, {
+                description: 'El alumno ya no aparecerá en la lista de riesgo.',
+                action: {
+                    label: 'Deshacer',
+                    onClick: async () => {
+                        const { error: undoError } = await supabase.from('students').update({ is_risk_handled: false }).eq('id', studentId)
+                        if (!undoError) {
+                            fetchData() // Refresh to show the student again
+                            toast.success('Acción deshecha')
+                        }
+                    }
+                }
+            })
         } catch (error) {
             console.error('Error dismissing risk:', error)
+            toast.error('No se pudo desestimar el riesgo')
+        } finally {
+            setDismissingId(null)
         }
     }
 
@@ -197,6 +249,36 @@ export default function DashboardPage() {
         classDate.setHours(hours, minutes, 0)
         return classDate > now
     }) || upcomingClasses[0]
+
+    // Onboarding checklist steps
+    const onboardingSteps = [
+        {
+            id: 'school',
+            label: 'Creá tu primera escuela',
+            description: 'Registrá el establecimiento donde enseñás.',
+            done: stats.schools > 0,
+            href: '/escuelas',
+            cta: 'Ir a Mis Escuelas',
+        },
+        {
+            id: 'course',
+            label: 'Agregá un curso',
+            description: 'Creá tu primer curso con su año, división y horario.',
+            done: stats.courses > 0,
+            href: '/escuelas',
+            cta: 'Crear curso',
+        },
+        {
+            id: 'students',
+            label: 'Sumá tus alumnos',
+            description: 'Matriculá alumnos en el curso para registrar asistencia y notas.',
+            done: stats.students > 0,
+            href: stats.courses > 0 ? getSmartHref('alumnos') : '/escuelas',
+            cta: 'Agregar alumnos',
+        },
+    ]
+    const completedSteps = onboardingSteps.filter(s => s.done).length
+    const showOnboarding = !loading && stats.schools === 0
 
     return (
         <div className="relative space-y-6 max-w-7xl mx-auto pb-12 px-4 md:px-0">
@@ -240,7 +322,12 @@ export default function DashboardPage() {
                          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 flex items-center gap-4">
                             <div className="text-right">
                                 <p className="text-[10px] text-primary-300 font-bold uppercase tracking-tighter">Asistencia Hoy</p>
-                                <p className="text-2xl font-black">94%</p>
+                                <p className="text-2xl font-black">
+                                    {todayAttendanceRate !== null ? `${todayAttendanceRate}%` : '—'}
+                                </p>
+                                {todayAttendanceRate === null && (
+                                    <p className="text-[9px] text-primary-400/60 font-bold">Sin registros</p>
+                                )}
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-primary-500/20 flex items-center justify-center">
                                 <GraduationCap className="w-6 h-6 text-primary-400" />
@@ -250,24 +337,130 @@ export default function DashboardPage() {
                 </div>
             </motion.div>
 
+            {/* ONBOARDING CHECKLIST — visible only for new users */}
+            {showOnboarding && (
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-surface rounded-[2rem] border border-amber-500/20 p-6 shadow-sm"
+                >
+                    <div className="flex items-start gap-4 mb-5">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                            <Sparkles className="w-5 h-5 text-amber-500" />
+                        </div>
+                        <div className="flex-1">
+                            <h2 className="text-base font-black text-text-primary">¡Bienvenido/a! Configurá tu espacio en 3 pasos</h2>
+                            <p className="text-sm text-text-muted mt-0.5">
+                                Completá estos pasos para empezar a usar todas las funciones del Organizador Docente.
+                            </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                            <p className="text-2xl font-black text-amber-500">{completedSteps}<span className="text-sm text-text-muted font-normal">/3</span></p>
+                        </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="w-full h-1.5 bg-surface-secondary rounded-full mb-5 overflow-hidden">
+                        <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(completedSteps / 3) * 100}%` }}
+                            transition={{ duration: 0.6, ease: 'easeOut' }}
+                            className="h-full bg-amber-500 rounded-full"
+                        />
+                    </div>
+
+                    <div className="space-y-3">
+                        {onboardingSteps.map((step, i) => (
+                            <div key={step.id} className={cn(
+                                "flex items-center gap-4 p-4 rounded-xl border transition-all",
+                                step.done
+                                    ? "bg-emerald-500/5 border-emerald-500/20 opacity-60"
+                                    : "bg-surface-secondary border-border hover:border-amber-500/30"
+                            )}>
+                                <div className={cn(
+                                    "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-black",
+                                    step.done
+                                        ? "bg-emerald-500 text-white"
+                                        : "bg-surface border-2 border-border text-text-muted"
+                                )}>
+                                    {step.done ? (
+                                        <CheckCircle2 className="w-4 h-4" />
+                                    ) : (
+                                        <span>{i + 1}</span>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className={cn(
+                                        "text-sm font-bold",
+                                        step.done ? "text-emerald-600 dark:text-emerald-400 line-through" : "text-text-primary"
+                                    )}>
+                                        {step.label}
+                                    </p>
+                                    {!step.done && (
+                                        <p className="text-xs text-text-muted mt-0.5">{step.description}</p>
+                                    )}
+                                </div>
+                                {!step.done && (
+                                    <Link
+                                        href={step.href}
+                                        className="flex-shrink-0 px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+                                    >
+                                        {step.cta} <ChevronRight className="w-3 h-3" />
+                                    </Link>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+            )}
+
             {/* QUICK ACTIONS GRID - The "Command Center" */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => { if(nextClass) window.location.href = `/cursos/${nextClass.id}/asistencia` }}
-                    className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[#10b981] text-white shadow-lg shadow-emerald-500/20 group transition-all"
+                    onClick={() => {
+                        if (nextClass) {
+                            router.push(`/cursos/${nextClass.id}/clase`)
+                        } else {
+                            toast.info('No hay clases programadas hoy', {
+                                description: 'Configurá tus horarios en Mis Escuelas para ver tus clases aquí.',
+                                action: { label: 'Ir a Escuelas', onClick: () => router.push('/escuelas') }
+                            })
+                        }
+                    }}
+                    className={cn(
+                        "flex flex-col items-center justify-center p-4 rounded-2xl text-white shadow-lg group transition-all",
+                        nextClass
+                            ? "bg-[#10b981] shadow-emerald-500/20"
+                            : "bg-slate-600 shadow-slate-500/20 opacity-70"
+                    )}
                 >
                     <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                        <Users className="w-6 h-6" />
+                        <Clock className="w-6 h-6" />
                     </div>
-                    <span className="font-black text-sm uppercase tracking-tight">Tomar Asistencia</span>
+                    <span className="font-black text-sm uppercase tracking-tight">
+                        {nextClass ? 'Clase de Hoy' : 'Sin Clases'}
+                    </span>
+                    {!nextClass && (
+                        <span className="text-[10px] opacity-70 mt-0.5">Configurar →</span>
+                    )}
                 </motion.button>
 
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => window.location.href = getSmartHref('trabajos')}
+                    onClick={() => {
+                        const href = getSmartHref('calificaciones')
+                        if (!selectedCourseId) {
+                            toast.info('Seleccioná un curso primero', {
+                                description: 'Para cargar notas tenés que acceder desde un curso específico.',
+                                action: { label: 'Ir a Escuelas', onClick: () => router.push('/escuelas') }
+                            })
+                        } else {
+                            router.push(href)
+                        }
+                    }}
                     className="flex flex-col items-center justify-center p-4 rounded-2xl bg-surface border border-border hover:border-primary-500/50 group transition-all"
                 >
                     <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center mb-2 group-hover:bg-primary-500/20 transition-colors">
@@ -279,6 +472,7 @@ export default function DashboardPage() {
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    onClick={() => toast.info('¡Próximamente!', { description: 'El módulo de IA está en desarrollo. ¡Pronto podrás usarlo!' })}
                     className="flex flex-col items-center justify-center p-4 rounded-2xl bg-surface border border-border hover:border-amber-500/50 group transition-all"
                 >
                     <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center mb-2 group-hover:bg-amber-500/20 transition-colors">
@@ -290,7 +484,7 @@ export default function DashboardPage() {
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => window.location.href = '/agenda'}
+                    onClick={() => router.push('/agenda')}
                     className="flex flex-col items-center justify-center p-4 rounded-2xl bg-surface border border-border hover:border-violet-500/50 group transition-all"
                 >
                     <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center mb-2 group-hover:bg-violet-500/20 transition-colors">
@@ -300,7 +494,8 @@ export default function DashboardPage() {
                 </motion.button>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6 items-start">
+            {!showOnboarding && (
+                <div className="grid lg:grid-cols-3 gap-6 items-start">
                 {/* Left Side: Timeline & Classes */}
                 <div className="lg:col-span-2 space-y-6">
                     <motion.div
@@ -355,7 +550,7 @@ export default function DashboardPage() {
                                                     <span className="hidden md:inline-block px-2 py-1 rounded-md bg-surface border border-border text-[10px] font-bold text-text-muted">Aula {cls.classroom}</span>
                                                 )}
                                                 <Link 
-                                                    href={`/cursos/${cls.id}/asistencia`}
+                                                    href={`/cursos/${cls.id}/clase`}
                                                     className="w-8 h-8 rounded-lg bg-white dark:bg-surface border border-border flex items-center justify-center text-primary-500 hover:bg-primary-500 hover:text-white transition-all shadow-sm"
                                                 >
                                                     <CheckCircle2 className="w-4 h-4" />
@@ -424,10 +619,15 @@ export default function DashboardPage() {
                                                 </div>
                                             </div>
                                             <button 
-                                                onClick={() => handleDismissRisk(student.id)}
-                                                className="p-1.5 text-text-muted hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                onClick={() => handleDismissRisk(student.id, `${student.first_name} ${student.last_name}`)}
+                                                disabled={dismissingId === student.id}
+                                                className="p-1.5 text-text-muted hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all disabled:opacity-50"
                                             >
-                                                <EyeOff className="w-3.5 h-3.5" />
+                                                {dismissingId === student.id ? (
+                                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                ) : (
+                                                    <EyeOff className="w-3.5 h-3.5" />
+                                                )}
                                             </button>
                                         </div>
                                     </div>
@@ -467,13 +667,26 @@ export default function DashboardPage() {
                                     </Link>
                                 ))
                             )}
-                            <button className="w-full mt-2 py-2 rounded-xl border-2 border-dashed border-border text-[10px] font-black text-text-muted hover:border-primary-300 hover:text-primary-600 transition-all uppercase tracking-widest">
+                             <button 
+                                onClick={() => {
+                                    if (!selectedCourseId) {
+                                        toast.info('Seleccioná un curso primero', {
+                                            description: 'Para ver trabajos pendientes tenés que acceder desde un curso específico.',
+                                            action: { label: 'Ir a Escuelas', onClick: () => router.push('/escuelas') }
+                                        })
+                                    } else {
+                                        router.push(`/cursos/${selectedCourseId}/trabajos`)
+                                    }
+                                }}
+                                className="w-full mt-2 py-2 rounded-xl border-2 border-dashed border-border text-[10px] font-black text-text-muted hover:border-primary-300 hover:text-primary-600 transition-all uppercase tracking-widest"
+                            >
                                 Corregir Hoy
                             </button>
                         </div>
                     </motion.div>
                 </div>
             </div>
+            )}
         </div>
     )
 }

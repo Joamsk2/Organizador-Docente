@@ -139,6 +139,38 @@ export function useCourses(schoolId?: string | null) {
         return true
     }
 
+    const createSchedule = async (scheduleData: InsertSchedule) => {
+        const supabase = createClient()
+        const { error } = await supabase
+            .from('course_schedules')
+            .insert(scheduleData)
+
+        if (error) {
+            toast.error('Error al crear horario', { description: error.message })
+            return false
+        }
+
+        toast.success('Horario agregado a la agenda')
+        fetchCourses()
+        return true
+    }
+
+    const deleteSchedule = async (scheduleId: string) => {
+        const supabase = createClient()
+        const { error } = await supabase
+            .from('course_schedules')
+            .delete()
+            .eq('id', scheduleId)
+
+        if (error) {
+            toast.error('Error al eliminar horario', { description: error.message })
+            return false
+        }
+
+        toast.success('Horario eliminado de la agenda')
+        return true
+    }
+
     return {
         courses,
         loading,
@@ -146,5 +178,7 @@ export function useCourses(schoolId?: string | null) {
         createCourse,
         updateCourse,
         deleteCourse,
+        createSchedule,
+        deleteSchedule,
     }
 }

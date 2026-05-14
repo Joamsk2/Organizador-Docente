@@ -80,7 +80,7 @@ export default function CalificacionesCoursePage({ params }: { params: Promise<{
                                 period={selectedPeriod}
                                 students={students}
                                 grades={grades}
-                                suggestedColumns={assignments.map(a => ({ id: a.id, title: a.title }))}
+                                suggestedColumns={assignments.map(a => ({ id: a.id, title: a.title, created_at: a.created_at }))}
                                 loading={loadingGrades || loadingStudents || loadingAssignments}
                                 onSaveGrade={saveGrade}
                                 onDeleteGrade={deleteGrade}

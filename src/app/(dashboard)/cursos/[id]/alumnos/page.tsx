@@ -8,6 +8,7 @@ import { useCourses } from '@/hooks/use-courses'
 import { StudentForm } from '@/components/students/student-form'
 import { StudentImportModal } from '@/components/students/student-import-modal'
 import { Upload } from 'lucide-react'
+import { ConfirmModal } from '@/components/ui/confirm-modal'
 
 export default function AlumnosCoursePage({ params }: { params: Promise<{ id: string }> }) {
     const { id: courseId } = use(params)
@@ -20,6 +21,11 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isImportModalOpen, setIsImportModalOpen] = useState(false)
     const [studentToEdit, setStudentToEdit] = useState<StudentWithCourses | null>(null)
+    
+    // Delete confirmation state
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const [studentToDelete, setStudentToDelete] = useState<StudentWithCourses | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     useEffect(() => {
         fetchCourses()
@@ -140,9 +146,8 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
                                                     </button>
                                                     <button
                                                         onClick={() => {
-                                                            if (confirm(`¿Estás seguro de eliminar a ${student.first_name} ${student.last_name}?`)) {
-                                                                deleteStudent(student.id)
-                                                            }
+                                                            setStudentToDelete(student)
+                                                            setIsDeleteDialogOpen(true)
                                                         }}
                                                         className="p-2 text-text-muted hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                                                         title="Eliminar alumno"
@@ -190,6 +195,25 @@ export default function AlumnosCoursePage({ params }: { params: Promise<{ id: st
                 onImport={async (studentsData) => {
                     return await createStudentsBulk(studentsData, [courseId])
                 }}
+            />
+
+            <ConfirmModal
+                isOpen={isDeleteDialogOpen}
+                onClose={() => {
+                    setIsDeleteDialogOpen(false)
+                    setStudentToDelete(null)
+                }}
+                onConfirm={async () => {
+                    if (studentToDelete) {
+                        setIsDeleting(true)
+                        await deleteStudent(studentToDelete.id)
+                        setIsDeleting(false)
+                    }
+                }}
+                loading={isDeleting}
+                title="Eliminar Alumno"
+                description={`¿Estás seguro de que querés eliminar a ${studentToDelete?.first_name} ${studentToDelete?.last_name}? Esta acción es permanente y se perderán sus registros de asistencia y notas.`}
+                confirmText="Eliminar Alumno"
             />
         </div >
     )

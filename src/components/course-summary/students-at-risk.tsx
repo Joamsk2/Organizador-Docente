@@ -38,7 +38,7 @@ export function StudentsAtRisk({ students, courseId, onDismissRisk }: StudentsAt
                     {students.length}
                 </span>
             </div>
-            <div className="p-0 flex-1 overflow-y-auto">
+            <div className="p-0 flex-1 overflow-y-auto max-h-[320px] no-scrollbar">
                 <div className="divide-y divide-red-100 dark:divide-red-900/30">
                     {students.map(student => (
                         <Link

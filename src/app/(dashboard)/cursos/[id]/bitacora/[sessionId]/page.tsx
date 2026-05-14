@@ -8,6 +8,8 @@ import { useClassSessions, type ClassSessionWithDetails, type ClassMaterial } fr
 import { useCurriculum } from '@/hooks/use-curriculum'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { ConfirmModal } from '@/components/ui/confirm-modal'
+
 
 // Simple Rich Text Editor fallback if the main one is too complex to wire up here initially
 function SimpleTextarea({ value, onChange, placeholder }: { value: string, onChange: (v: string) => void, placeholder: string }) {
@@ -33,6 +35,8 @@ export default function CockpitPage({ params }: { params: Promise<{ id: string, 
     const [instructions, setInstructions] = useState('')
     const [showMaterialForm, setShowMaterialForm] = useState(false)
     const [newMaterial, setNewMaterial] = useState({ type: 'file', title: '', content: '' })
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     useEffect(() => {
         fetchSessions()
@@ -74,11 +78,18 @@ export default function CockpitPage({ params }: { params: Promise<{ id: string, 
     }
 
     const handleDeleteSession = async () => {
-        if (window.confirm('¿Estás seguro de que deseas eliminar este registro de clase? Esta acción no se puede deshacer.')) {
+        try {
+            setIsDeleting(true)
             const ok = await deleteSession(sessionId)
             if (ok) {
                 router.push(`/cursos/${courseId}/bitacora`)
             }
+        } catch (error) {
+            console.error('Error deleting session:', error)
+            toast.error('No se pudo eliminar la clase')
+        } finally {
+            setIsDeleting(false)
+            setIsDeleteDialogOpen(false)
         }
     }
 
@@ -102,7 +113,7 @@ export default function CockpitPage({ params }: { params: Promise<{ id: string, 
                     </div>
                 </div>
                 <button 
-                    onClick={handleDeleteSession}
+                    onClick={() => setIsDeleteDialogOpen(true)}
                     className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
                     title="Eliminar clase"
                 >
@@ -303,6 +314,16 @@ export default function CockpitPage({ params }: { params: Promise<{ id: string, 
                 </div>
 
             </div>
+
+            <ConfirmModal
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                onConfirm={handleDeleteSession}
+                title="Eliminar Clase"
+                description={`¿Estás seguro de que deseas eliminar el registro de la clase "${session.title}"? Esta acción no se puede deshacer.`}
+                loading={isDeleting}
+                variant="danger"
+            />
         </div>
     )
 }
